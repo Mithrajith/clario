@@ -50,6 +50,7 @@ yarn-debug.log*
 yarn-error.log*
 
 # Database & Storage runtime data
+storage/
 postgres_data/
 qdrant_data/
 *.db

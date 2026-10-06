@@ -1,7 +1,8 @@
 import uuid
 from datetime import datetime
 from typing import Optional, List
-from pydantic import BaseModel, EmailStr, ConfigDict
+from pydantic import BaseModel, ConfigDict
+from app.schemas.common import EmailStr
 
 
 class RoleBase(BaseModel):

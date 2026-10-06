@@ -1,6 +1,10 @@
+from pathlib import Path
 from typing import List, Set, Optional, Any, Union
 from pydantic import field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+ROOT_ENV_PATH = Path(__file__).resolve().parents[3] / ".env"
+BACKEND_ENV_PATH = Path(__file__).resolve().parents[2] / ".env"
 
 
 class Settings(BaseSettings):
@@ -15,7 +19,7 @@ class Settings(BaseSettings):
     HOST: str = "0.0.0.0"
     
     # CORS Configuration
-    CORS_ORIGINS: List[str] = [
+    CORS_ORIGINS: Union[List[str], str] = [
         "http://localhost:5173",
         "http://127.0.0.1:5173",
         "http://localhost:3000",
@@ -124,13 +128,32 @@ class Settings(BaseSettings):
         """Ensure standard SQLAlchemy postgresql+psycopg driver URL format for PostgreSQL & Supabase/Neon/Render."""
         url = self.DATABASE_URL
         if url.startswith("postgres://"):
-            return url.replace("postgres://", "postgresql+psycopg://", 1)
-        if url.startswith("postgresql://"):
-            return url.replace("postgresql://", "postgresql+psycopg://", 1)
+            url = url.replace("postgres://", "postgresql+psycopg://", 1)
+        elif url.startswith("postgresql://"):
+            url = url.replace("postgresql://", "postgresql+psycopg://", 1)
+
+        # Resolve IPv6-only hostnames (e.g. Supabase direct db.<ref>.supabase.co) for systems with AI_ADDRCONFIG constraints
+        try:
+            import re
+            import socket
+            m = re.search(r"@([^:/@]+)(?::(\d+))?(/.*)$", url)
+            if m:
+                host_str = m.group(1)
+                port_str = m.group(2) or "5432"
+                rest = m.group(3)
+                if not host_str.startswith("[") and "." in host_str:
+                    addrs = socket.getaddrinfo(host_str, int(port_str))
+                    ipv4_addrs = [a[4][0] for a in addrs if a[0] == socket.AF_INET]
+                    ipv6_addrs = [a[4][0] for a in addrs if a[0] == socket.AF_INET6]
+                    if not ipv4_addrs and ipv6_addrs:
+                        url = url[:m.start(1)] + f"[{ipv6_addrs[0]}]:{port_str}" + rest
+        except Exception:
+            pass
+
         return url
 
     model_config = SettingsConfigDict(
-        env_file=".env",
+        env_file=[str(ROOT_ENV_PATH), str(BACKEND_ENV_PATH), ".env", "../.env"],
         env_file_encoding="utf-8",
         case_sensitive=True,
         extra="ignore"

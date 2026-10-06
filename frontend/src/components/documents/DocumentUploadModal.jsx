@@ -4,7 +4,6 @@ import apiClient from '../../api/client';
 const MAX_FILE_SIZE_BYTES = 52428800; // 50 MB
 const ALLOWED_EXTENSIONS = ['pdf', 'docx', 'txt'];
 
-
 const DEPARTMENTS = [
   'Engineering',
   'Operations',
@@ -45,7 +44,7 @@ export const DocumentUploadModal = ({ isOpen, onClose, onUploadSuccess }) => {
 
     const ext = selectedFile.name.split('.').pop()?.toLowerCase();
     if (!ext || !ALLOWED_EXTENSIONS.includes(ext)) {
-      return `Unsupported file format (.${ext || 'unknown'}). Allowed: PDF, DOCX, TXT.`;
+      return `Unsupported file format (.${ext || 'unknown'}). Supported formats: PDF, DOCX, TXT.`;
     }
 
     if (selectedFile.size > MAX_FILE_SIZE_BYTES) {
@@ -143,6 +142,13 @@ export const DocumentUploadModal = ({ isOpen, onClose, onUploadSuccess }) => {
     return `${parseFloat((bytes / Math.pow(k, i)).toFixed(1))} ${sizes[i]}`;
   };
 
+  const getExtBadgeClass = (filename) => {
+    const ext = filename?.split('.').pop()?.toLowerCase();
+    if (ext === 'pdf') return 'format-badge-pdf';
+    if (ext === 'docx' || ext === 'doc') return 'format-badge-docx';
+    return 'format-badge-txt';
+  };
+
   return (
     <div className="modal-backdrop" onClick={handleClose}>
       <div
@@ -154,14 +160,19 @@ export const DocumentUploadModal = ({ isOpen, onClose, onUploadSuccess }) => {
       >
         <div className="modal-header">
           <div className="modal-title-box">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-              <polyline points="17 8 12 3 7 8" />
-              <line x1="12" y1="3" x2="12" y2="15" />
-            </svg>
-            <h2 id="upload-modal-title" className="modal-title">
-              Upload Enterprise Document
-            </h2>
+            <div className="modal-header-icon-box">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                <polyline points="17 8 12 3 7 8" />
+                <line x1="12" y1="3" x2="12" y2="15" />
+              </svg>
+            </div>
+            <div>
+              <h2 id="upload-modal-title" className="modal-title">
+                Upload Enterprise Document
+              </h2>
+              <span className="modal-subtitle">Ingest knowledge files into Clario Vector Cloud</span>
+            </div>
           </div>
           <button
             type="button"
@@ -210,14 +221,15 @@ export const DocumentUploadModal = ({ isOpen, onClose, onUploadSuccess }) => {
             {file ? (
               <div className="dropzone-file-selected">
                 <div className="file-icon-box">
-                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-                    <polyline points="14 2 14 8 20 8" />
-                  </svg>
+                  <span className={`doc-format-badge ${getExtBadgeClass(file.name)}`}>
+                    {file.name.split('.').pop()?.toUpperCase()}
+                  </span>
                 </div>
                 <div className="file-selected-details">
                   <span className="file-name">{file.name}</span>
-                  <span className="file-size-tag">{formatFileSize(file.size)} &bull; {file.name.split('.').pop()?.toUpperCase()}</span>
+                  <span className="file-size-tag">
+                    {formatFileSize(file.size)} &bull; Ready for upload
+                  </span>
                 </div>
                 <button
                   type="button"
@@ -228,19 +240,29 @@ export const DocumentUploadModal = ({ isOpen, onClose, onUploadSuccess }) => {
                   }}
                   disabled={isUploading}
                 >
-                  Change File
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <polyline points="23 4 23 10 17 10" />
+                    <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10" />
+                  </svg>
+                  <span>Change File</span>
                 </button>
               </div>
             ) : (
               <div className="dropzone-prompt">
-                <svg className="dropzone-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-                  <polyline points="17 8 12 3 7 8" />
-                  <line x1="12" y1="3" x2="12" y2="15" />
-                </svg>
+                <div className="dropzone-cloud-icon">
+                  <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                    <polyline points="17 8 12 3 7 8" />
+                    <line x1="12" y1="3" x2="12" y2="15" />
+                  </svg>
+                </div>
                 <div className="dropzone-text">
-                  <span className="prompt-title">Drag & drop document here, or <span className="browse-link">browse</span></span>
-                  <span className="prompt-meta">Supports PDF, DOCX, TXT up to 50 MB</span>
+                  <span className="prompt-title">
+                    Drag & drop your document here, or <span className="browse-link">browse files</span>
+                  </span>
+                  <span className="prompt-meta">
+                    Accepted formats: <strong>PDF, DOCX, TXT</strong> (Maximum file size: 50 MB)
+                  </span>
                 </div>
               </div>
             )}
@@ -249,13 +271,17 @@ export const DocumentUploadModal = ({ isOpen, onClose, onUploadSuccess }) => {
           {/* Document Title */}
           <div className="form-group" style={{ marginTop: '1.25rem' }}>
             <label htmlFor="upload-title" className="form-label">
-              Document Display Title
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                <polyline points="14 2 14 8 20 8" />
+              </svg>
+              <span>Document Display Title</span>
             </label>
             <input
               id="upload-title"
               type="text"
               className="form-input"
-              placeholder="e.g. Annual Travel Reimbursement Policy 2026"
+              placeholder="e.g. FY2026 Q3 Cloud Architecture & Security Guidelines"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               disabled={isUploading}
@@ -266,7 +292,11 @@ export const DocumentUploadModal = ({ isOpen, onClose, onUploadSuccess }) => {
           <div className="form-row-2col">
             <div className="form-group">
               <label htmlFor="upload-department" className="form-label">
-                Department Partition
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+                  <circle cx="9" cy="7" r="4" />
+                </svg>
+                <span>Department Partition</span>
               </label>
               <select
                 id="upload-department"
@@ -285,7 +315,11 @@ export const DocumentUploadModal = ({ isOpen, onClose, onUploadSuccess }) => {
 
             <div className="form-group">
               <label htmlFor="upload-access-level" className="form-label">
-                Security Access Level
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+                  <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+                </svg>
+                <span>Security Access Level</span>
               </label>
               <select
                 id="upload-access-level"
@@ -294,9 +328,9 @@ export const DocumentUploadModal = ({ isOpen, onClose, onUploadSuccess }) => {
                 onChange={(e) => setAccessLevel(e.target.value)}
                 disabled={isUploading}
               >
-                <option value="internal">Internal (Default)</option>
-                <option value="public">Public (All Users)</option>
-                <option value="confidential">Confidential</option>
+                <option value="internal">Internal (All Authenticated)</option>
+                <option value="public">Public (Open Knowledge)</option>
+                <option value="confidential">Confidential (Department Only)</option>
                 <option value="restricted">Restricted (Admin Only)</option>
               </select>
             </div>
@@ -320,7 +354,7 @@ export const DocumentUploadModal = ({ isOpen, onClose, onUploadSuccess }) => {
               {isUploading ? (
                 <>
                   <span className="btn-spinner"></span>
-                  <span>Uploading File...</span>
+                  <span>Uploading Document...</span>
                 </>
               ) : (
                 <>

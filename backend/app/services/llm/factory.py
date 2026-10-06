@@ -13,7 +13,7 @@ def get_llm_provider(provider_type: Optional[str] = None) -> BaseLLMProvider:
     """Factory creating the configured LLM provider instance."""
     resolved_type = (provider_type or settings.LLM_PROVIDER or "mock").lower().strip()
 
-    if resolved_type in ("openai", "azure", "vllm", "ollama"):
+    if resolved_type in ("openai", "azure", "vllm", "ollama", "groq"):
         logger.info(f"Instantiating OpenAI-compatible LLM provider ({resolved_type})...")
         return OpenAICompatibleProvider()
 

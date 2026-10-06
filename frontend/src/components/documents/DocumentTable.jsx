@@ -14,7 +14,7 @@ export const DocumentTable = ({
   const [deleteError, setDeleteError] = useState('');
 
   const formatFileSize = (bytes) => {
-    if (!bytes) return '0 B';
+    if (!bytes || bytes === 0) return '0 B';
     const k = 1024;
     const sizes = ['B', 'KB', 'MB', 'GB'];
     const i = Math.floor(Math.log(bytes) / Math.log(k));
@@ -33,6 +33,22 @@ export const DocumentTable = ({
     } catch {
       return isoString;
     }
+  };
+
+  const getFormatBadge = (filename, docType) => {
+    const ext = (docType || filename?.split('.').pop() || 'txt').toLowerCase();
+    let label = ext.toUpperCase();
+    let badgeClass = 'format-badge-default';
+
+    if (ext === 'pdf') {
+      badgeClass = 'format-badge-pdf';
+    } else if (ext === 'docx' || ext === 'doc') {
+      badgeClass = 'format-badge-docx';
+    } else if (ext === 'txt') {
+      badgeClass = 'format-badge-txt';
+    }
+
+    return <span className={`doc-format-badge ${badgeClass}`}>{label}</span>;
   };
 
   const confirmDelete = async () => {
@@ -62,13 +78,13 @@ export const DocumentTable = ({
       <table className="data-table enterprise-table" id="documents-table">
         <thead>
           <tr>
-            <th>Document / Filename</th>
+            <th style={{ minWidth: '260px' }}>Document / Filename</th>
             <th>Department</th>
             <th>Access Level</th>
             <th>File Size</th>
-            <th>Upload Date</th>
-            <th>Processing Status</th>
-            <th style={{ textAlign: 'right' }}>Actions</th>
+            <th>Uploaded</th>
+            <th>Lifecycle Status</th>
+            <th style={{ textAlign: 'right', minWidth: '160px' }}>Actions</th>
           </tr>
         </thead>
         <tbody>
@@ -76,13 +92,16 @@ export const DocumentTable = ({
             // Skeleton Loading State
             Array.from({ length: 4 }).map((_, i) => (
               <tr key={i} className="skeleton-row">
-                <td><div className="skeleton-bar" style={{ width: '60%' }}></div></td>
-                <td><div className="skeleton-bar" style={{ width: '40%' }}></div></td>
-                <td><div className="skeleton-bar" style={{ width: '35%' }}></div></td>
-                <td><div className="skeleton-bar" style={{ width: '30%' }}></div></td>
-                <td><div className="skeleton-bar" style={{ width: '45%' }}></div></td>
-                <td><div className="skeleton-bar" style={{ width: '50%' }}></div></td>
-                <td><div className="skeleton-bar" style={{ width: '60%', marginLeft: 'auto' }}></div></td>
+                <td>
+                  <div className="skeleton-line" style={{ width: '70%', height: '14px', marginBottom: '6px' }}></div>
+                  <div className="skeleton-line" style={{ width: '40%', height: '10px' }}></div>
+                </td>
+                <td><div className="skeleton-line" style={{ width: '80px', height: '20px' }}></div></td>
+                <td><div className="skeleton-line" style={{ width: '70px', height: '20px' }}></div></td>
+                <td><div className="skeleton-line" style={{ width: '50px', height: '14px' }}></div></td>
+                <td><div className="skeleton-line" style={{ width: '75px', height: '14px' }}></div></td>
+                <td><div className="skeleton-line" style={{ width: '90px', height: '22px' }}></div></td>
+                <td><div className="skeleton-line" style={{ width: '110px', height: '28px', marginLeft: 'auto' }}></div></td>
               </tr>
             ))
           ) : documents.length === 0 ? (
@@ -101,7 +120,7 @@ export const DocumentTable = ({
                   </div>
                   <h3 className="empty-state-title">No Enterprise Documents Found</h3>
                   <p className="empty-state-desc">
-                    There are no documents matching your criteria. Upload a document (PDF, DOCX, TXT) to populate the corporate knowledge base.
+                    There are no knowledge files matching your active filter criteria. Upload a new document (PDF, DOCX, TXT) to index into the vector database.
                   </p>
                 </div>
               </td>
@@ -114,29 +133,38 @@ export const DocumentTable = ({
 
               return (
                 <tr key={doc.id} className="document-table-row">
-                  {/* Title & Filename */}
+                  {/* Title & Filename with Format Badge */}
                   <td>
                     <div
                       className="doc-primary-info"
                       onClick={() => onSelectDocument(doc)}
                       role="button"
                       tabIndex="0"
-                      title="Click to view details and chunk metadata"
+                      title="Click to view full document metadata and vector chunks"
                     >
-                      <span className="doc-title-text">{doc.title || doc.filename}</span>
-                      <span className="doc-filename-text">{doc.filename}</span>
+                      <div className="doc-format-icon-container">
+                        {getFormatBadge(doc.filename, doc.document_type)}
+                      </div>
+                      <div className="doc-title-stack">
+                        <span className="doc-title-text">{doc.title || doc.filename}</span>
+                        <span className="doc-filename-text">{doc.filename}</span>
+                      </div>
                     </div>
                   </td>
 
                   {/* Department */}
                   <td>
-                    <span className="dept-tag">{doc.department || 'General'}</span>
+                    <span className="dept-tag">
+                      <span className="dept-tag-dot"></span>
+                      <span>{doc.department || 'General'}</span>
+                    </span>
                   </td>
 
                   {/* Access Level */}
                   <td>
                     <span className={`access-pill ${doc.access_level || 'internal'}`}>
-                      {(doc.access_level || 'internal').toUpperCase()}
+                      <span className="access-dot"></span>
+                      <span>{(doc.access_level || 'internal').toUpperCase()}</span>
                     </span>
                   </td>
 
@@ -163,7 +191,7 @@ export const DocumentTable = ({
                           type="button"
                           className="btn-table-action process"
                           onClick={() => onProcessDocument(doc.id)}
-                          title="Trigger parsing, chunking, and vector indexing"
+                          title="Trigger parsing, chunking, and Qdrant vector indexing"
                         >
                           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                             <polyline points="23 4 23 10 17 10" />
@@ -175,7 +203,7 @@ export const DocumentTable = ({
 
                       <button
                         type="button"
-                        className="btn-table-action"
+                        className="btn-table-action view-details"
                         onClick={() => onSelectDocument(doc)}
                         title="View document metadata and chunks"
                       >
@@ -221,20 +249,26 @@ export const DocumentTable = ({
           >
             <div className="modal-header">
               <div className="modal-title-box">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#ef4444" strokeWidth="2">
-                  <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
-                  <line x1="12" y1="9" x2="12" y2="13" />
-                  <line x1="12" y1="17" x2="12.01" y2="17" />
-                </svg>
-                <h3 id="delete-confirm-title" className="modal-title" style={{ color: '#f87171' }}>
-                  Confirm Document Deletion
-                </h3>
+                <div className="danger-icon-badge">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#f87171" strokeWidth="2">
+                    <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
+                    <line x1="12" y1="9" x2="12" y2="13" />
+                    <line x1="12" y1="17" x2="12.01" y2="17" />
+                  </svg>
+                </div>
+                <div>
+                  <h3 id="delete-confirm-title" className="modal-title" style={{ color: '#f87171' }}>
+                    Confirm Document Deletion
+                  </h3>
+                  <span className="modal-subtitle">Irreversible Knowledge Base Modification</span>
+                </div>
               </div>
               <button
                 type="button"
                 className="btn-modal-close"
                 onClick={() => !isDeleting && setDeleteModalDoc(null)}
                 disabled={isDeleting}
+                aria-label="Close delete dialog"
               >
                 &times;
               </button>
@@ -242,15 +276,23 @@ export const DocumentTable = ({
 
             <div className="modal-body" style={{ padding: '1.25rem 1.5rem' }}>
               <p className="delete-warning-text">
-                Are you sure you want to delete this document?
+                Are you sure you want to permanently delete this document?
               </p>
               <p className="delete-subwarning-text">
-                This will permanently remove the document, its chunks, and indexed vectors from Qdrant and the BM25 index.
+                This operation will immediately remove the source file from storage, purge all chunk embeddings from the Qdrant Cloud collection, and invalidate related citation indices.
               </p>
 
               <div className="delete-target-preview">
-                <strong>{deleteModalDoc.title || deleteModalDoc.filename}</strong>
-                <span className="code-badge">{deleteModalDoc.filename}</span>
+                <div className="delete-doc-icon">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                    <polyline points="14 2 14 8 20 8" />
+                  </svg>
+                </div>
+                <div className="delete-doc-info">
+                  <strong>{deleteModalDoc.title || deleteModalDoc.filename}</strong>
+                  <span className="code-badge">{deleteModalDoc.filename}</span>
+                </div>
               </div>
 
               {deleteError && (

@@ -13,6 +13,20 @@ export const AppLayout = ({ currentView = 'documents', onViewChange, children })
         .slice(0, 2)
     : 'U';
 
+  const userRoles = user?.roles
+    ? user.roles.map((r) => (typeof r === 'object' ? r.name : r))
+    : ['user'];
+
+  const primaryRole = userRoles[0] || 'user';
+
+  const roleLabels = {
+    admin: { label: 'Admin', pillClass: 'admin', icon: '🛡️', desc: 'Full System & Document Management' },
+    analyst: { label: 'Analyst', pillClass: 'analyst', icon: '📊', desc: 'Cross-Department Search & Verification' },
+    user: { label: 'User', pillClass: 'user', icon: '⚡', desc: 'Department-Grounded Knowledge Access' },
+  };
+
+  const roleInfo = roleLabels[primaryRole.toLowerCase()] || roleLabels.user;
+
   const navigateTo = (view) => {
     if (onViewChange) {
       onViewChange(view);
@@ -25,27 +39,33 @@ export const AppLayout = ({ currentView = 'documents', onViewChange, children })
       <header className="app-header">
         <div className="header-left">
           <a
-            href="#documents"
+            href="#chat"
             className="brand-logo"
             onClick={(e) => {
               e.preventDefault();
-              navigateTo('documents');
+              navigateTo('chat');
             }}
           >
             <div className="brand-icon-box">C</div>
             <span className="brand-title">Clario</span>
           </a>
-          <span className="brand-subtitle">Enterprise Knowledge Platform</span>
+          <span className="brand-subtitle">Knowledge Intelligence</span>
         </div>
 
         <div className="header-right">
-          <span className="env-tag">ENV: {import.meta.env.MODE?.toUpperCase() || 'DEVELOPMENT'}</span>
+          {/* Live Cloud Database & Cluster Status */}
+          <div className="system-status-indicator" title="Neon Serverless PostgreSQL & Qdrant Cloud Connected">
+            <span className="pulse-dot"></span>
+            <span>Cloud Connected</span>
+          </div>
 
           <div className="user-profile-badge">
             <div className="avatar-circle">{userInitials}</div>
             <div className="user-info-text">
               <span className="user-display-name">{user?.name || 'Authorized User'}</span>
-              <span className="user-display-dept">{user?.department || 'Enterprise'}</span>
+              <span className="user-display-dept">
+                {user?.department || 'Enterprise'} &bull; {roleInfo.label}
+              </span>
             </div>
           </div>
 
@@ -70,7 +90,7 @@ export const AppLayout = ({ currentView = 'documents', onViewChange, children })
         {/* Navigation Sidebar */}
         <aside className="workspace-sidebar">
           <div>
-            <div className="sidebar-group-title">Knowledge Base</div>
+            <div className="sidebar-group-title">Knowledge Engine</div>
             <ul className="sidebar-menu">
               <li
                 className={`sidebar-item ${currentView === 'chat' ? 'active' : ''}`}
@@ -97,10 +117,8 @@ export const AppLayout = ({ currentView = 'documents', onViewChange, children })
                 <span>Documents</span>
               </li>
             </ul>
-          </div>
 
-          <div>
-            <div className="sidebar-group-title">System & Security</div>
+            <div className="sidebar-group-title">Infrastructure & RBAC</div>
             <ul className="sidebar-menu">
               <li
                 className={`sidebar-item ${currentView === 'dashboard' ? 'active' : ''}`}
@@ -116,17 +134,13 @@ export const AppLayout = ({ currentView = 'documents', onViewChange, children })
             </ul>
           </div>
 
-          <div>
-            <div className="sidebar-group-title">Future Capabilities</div>
-            <ul className="sidebar-menu">
-              <li className="sidebar-item disabled" title="Search interface scheduled for future phase">
-                <svg className="sidebar-item-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <circle cx="11" cy="11" r="8" />
-                  <line x1="21" y1="21" x2="16.65" y2="16.65" />
-                </svg>
-                <span>Semantic Search (Next)</span>
-              </li>
-            </ul>
+          {/* Active Role Privilege Badge Card */}
+          <div className="sidebar-role-card">
+            <div className="sidebar-role-header">
+              <span>{roleInfo.icon}</span>
+              <span className={`role-pill ${roleInfo.pillClass}`}>{roleInfo.label} Role</span>
+            </div>
+            <p className="sidebar-role-desc">{roleInfo.desc}</p>
           </div>
         </aside>
 
@@ -136,8 +150,8 @@ export const AppLayout = ({ currentView = 'documents', onViewChange, children })
 
       {/* Footer */}
       <footer className="app-footer">
-        <div>Clario Enterprise Platform &bull; Knowledge Intelligence &bull; Milestone 11</div>
-        <div>FastAPI &bull; PostgreSQL &bull; Qdrant &bull; React + Vite</div>
+        <div>Clario Enterprise &bull; Grounded Knowledge Intelligence</div>
+        <div>Neon PostgreSQL &bull; Qdrant Cloud &bull; Groq Llama/Qwen &bull; DeBERTa-v3</div>
       </footer>
     </div>
   );

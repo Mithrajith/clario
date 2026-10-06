@@ -1,9 +1,11 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import apiClient from '../api/client';
+import { useAuth } from '../context/AuthContext';
 import { ConversationSidebar } from '../components/chat/ConversationSidebar';
 import { MessageBubble } from '../components/chat/MessageBubble';
 
 export const Chat = () => {
+  const { user } = useAuth();
   const [conversations, setConversations] = useState([]);
   const [activeConversationId, setActiveConversationId] = useState(null);
   const [messages, setMessages] = useState([]);
@@ -50,7 +52,6 @@ export const Chat = () => {
 
     try {
       const conv = await apiClient.getConversation(conversationId);
-      // Backend returns conversation with messages: List[MessageRead]
       const rawMessages = Array.isArray(conv.messages) ? conv.messages : [];
       setMessages(rawMessages);
     } catch (err) {
@@ -85,10 +86,10 @@ export const Chat = () => {
   };
 
   // Submit question / message
-  const handleSendMessage = async (e) => {
+  const handleSendMessage = async (e, forcedQuery = null) => {
     if (e) e.preventDefault();
 
-    const query = inputQuery.trim();
+    const query = (forcedQuery || inputQuery).trim();
     if (!query || isGenerating) return;
 
     setInputQuery('');
@@ -123,7 +124,6 @@ export const Chat = () => {
         verify: true,
       });
 
-      // res is ConversationMessageResponse: { user_message, assistant_message, generation }
       const assistantMsg = {
         ...res.assistant_message,
         generation: res.generation || {},
@@ -136,7 +136,6 @@ export const Chat = () => {
       };
 
       setMessages((prev) => {
-        // Replace temporary user message with server-persisted user message if available
         const updated = prev.filter((m) => m.id !== optimisticUserMsg.id);
         return [
           ...updated,
@@ -162,6 +161,33 @@ export const Chat = () => {
   };
 
   const activeConv = conversations.find((c) => c.id === activeConversationId);
+  const rawRole = user?.roles?.[0];
+  const roleName = typeof rawRole === 'object' ? rawRole?.name : rawRole;
+  const userRole = (typeof roleName === 'string' ? roleName : 'user').toLowerCase();
+  const roleDepartment = user?.department || 'General';
+
+  // Role-adaptive starter prompts
+  const getPromptSuggestions = () => {
+    if (userRole === 'admin') {
+      return [
+        'What is the annual leave allowance for Clario employees and interns?',
+        'Summarize the corporate information security and VPN access policies.',
+        'What are the compliance and document access classification standards?',
+      ];
+    }
+    if (userRole === 'analyst') {
+      return [
+        'What are the standard operational expense and travel reimbursement procedures?',
+        'Summarize employee benefits, sick days, and vacation policies.',
+        'What are the document retention and compliance guidelines?',
+      ];
+    }
+    return [
+      'What is the annual leave allowance for Clario employees?',
+      'What are the requirements for corporate VPN and credentials?',
+      'How does sick leave policy apply to doctor visits?',
+    ];
+  };
 
   return (
     <div className="chat-page-container">
@@ -181,16 +207,16 @@ export const Chat = () => {
         <header className="chat-header">
           <div className="chat-header-title-box">
             <h1 className="chat-title">
-              {activeConv ? activeConv.title : 'Knowledge Intelligence Chat'}
+              {activeConv ? activeConv.title : 'Enterprise Knowledge Chat'}
             </h1>
             <span className="chat-subtitle">
-              Grounded Question Answering &bull; Hybrid Retrieval &bull; NLI Grounding Verification
+              Grounded Question Answering &bull; Neon DB &bull; Qdrant Cloud &bull; NLI Verification
             </span>
           </div>
 
           <div className="chat-header-badges">
-            <span className="code-badge">BGE + BM25 + CrossEncoder</span>
-            <span className="status-pill success">● RAG Active</span>
+            <span className="code-badge">{roleDepartment} Scope</span>
+            <span className="status-pill success">● RAG Pipeline Online</span>
           </div>
         </header>
 
@@ -217,21 +243,20 @@ export const Chat = () => {
                 Responses are synthesized from retrieved passages and verified for factual grounding.
               </p>
               <div className="prompt-suggestions">
-                <span className="suggestions-title">Example questions:</span>
-                <button
-                  type="button"
-                  className="suggestion-pill"
-                  onClick={() => setInputQuery('What are the company travel and expense reimbursement guidelines?')}
-                >
-                  "What are the company travel and expense reimbursement guidelines?"
-                </button>
-                <button
-                  type="button"
-                  className="suggestion-pill"
-                  onClick={() => setInputQuery('Summarize our information security and access control policies.')}
-                >
-                  "Summarize our information security and access control policies."
-                </button>
+                <span className="suggestions-title">Recommended for {roleDepartment} ({userRole.toUpperCase()}):</span>
+                {getPromptSuggestions().map((prompt, idx) => (
+                  <button
+                    key={idx}
+                    type="button"
+                    className="suggestion-pill"
+                    onClick={() => {
+                      setInputQuery(prompt);
+                      handleSendMessage(null, prompt);
+                    }}
+                  >
+                    "{prompt}"
+                  </button>
+                ))}
               </div>
             </div>
           ) : (
@@ -266,7 +291,7 @@ export const Chat = () => {
             <textarea
               ref={inputRef}
               className="chat-textarea"
-              placeholder="Ask a question about enterprise documents... (Press Enter to send)"
+              placeholder={`Ask a question about ${roleDepartment} or company documents... (Press Enter)`}
               value={inputQuery}
               onChange={(e) => setInputQuery(e.target.value)}
               onKeyDown={handleKeyDown}
@@ -294,7 +319,7 @@ export const Chat = () => {
           </form>
 
           <div className="chat-input-caption">
-            <span>Answers synthesized from retrieved documents &bull; Strict role-based document access enforced</span>
+            <span>Answers synthesized from retrieved passages &bull; Cross-Encoder Reranking &bull; NLI Grounding Verification</span>
           </div>
         </div>
       </div>
@@ -303,4 +328,3 @@ export const Chat = () => {
 };
 
 export default Chat;
-

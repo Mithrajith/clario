@@ -9,7 +9,7 @@ from app.services.retrieval.hybrid_retriever import HybridRetriever, hybrid_retr
 from app.services.retrieval.models import SearchFilters, RetrievalMode
 from app.services.context.builder import ContextBuilder, context_builder
 from app.services.llm.base import BaseLLMProvider, LLMGenerationRequest
-from app.services.llm.factory import llm_provider
+from app.services.llm.factory import get_llm_provider, llm_provider
 from app.services.llm.openai_provider import ContextLengthExceededError
 from app.schemas.generation import (
     GenerationRequest,
@@ -37,7 +37,7 @@ class GenerationService:
     ):
         self.retriever = retriever or hybrid_retriever
         self.context_builder = context_engine or context_builder
-        self.llm_provider = provider or llm_provider
+        self.llm_provider = provider or get_llm_provider()
         self.verifier = verifier or verification_service
 
     def _extract_and_map_citations(

@@ -1,5 +1,6 @@
 from typing import Optional, List
-from pydantic import BaseModel, EmailStr, Field
+from pydantic import BaseModel, Field
+from app.schemas.common import EmailStr
 from app.schemas.user import UserRead
 
 
