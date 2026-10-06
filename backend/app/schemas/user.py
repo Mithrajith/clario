@@ -26,6 +26,13 @@ class UserCreate(UserBase):
     password: str
 
 
+class UserUpdate(BaseModel):
+    name: Optional[str] = None
+    department: Optional[str] = None
+    is_active: Optional[bool] = None
+    role: Optional[str] = None
+
+
 class UserRead(UserBase):
     id: uuid.UUID
     created_at: datetime

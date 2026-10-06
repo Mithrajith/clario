@@ -14,13 +14,12 @@ from app.models.user import User
 router = APIRouter(prefix="/documents", tags=["Documents"])
 
 
-
 @router.post(
     "/upload",
     response_model=DocumentRead,
     status_code=status.HTTP_201_CREATED,
     summary="Upload Enterprise Document",
-    description="Upload original enterprise document (PDF, DOCX, TXT) and store file with database record.",
+    description="Upload original enterprise document (PDF, DOCX, TXT) and store file with database record. Restricted to Admin role.",
 )
 async def upload_document(
     file: UploadFile = File(...),
@@ -31,6 +30,14 @@ async def upload_document(
     db: Session = Depends(get_db),
     current_user: Optional[User] = Depends(get_current_user_optional),
 ):
+    if current_user is not None:
+        user_roles = [r.name for r in current_user.roles]
+        if "admin" not in user_roles:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Access denied: Only administrators can upload enterprise documents.",
+            )
+
     doc_record = await document_service.upload_document(
         db=db,
         file=file,
@@ -48,7 +55,7 @@ async def upload_document(
     response_model=DocumentRead,
     status_code=status.HTTP_200_OK,
     summary="Process Enterprise Document",
-    description="Trigger asynchronous document parsing, chunking, embedding generation, and Qdrant vector indexing via FastAPI BackgroundTasks.",
+    description="Trigger asynchronous document parsing, chunking, embedding generation, and Qdrant vector indexing. Restricted to Admin role.",
 )
 def process_document(
     document_id: str,
@@ -71,11 +78,13 @@ def process_document(
             detail=f"Document with ID '{document_id}' not found.",
         )
 
-    if current_user is not None and not document_service.is_user_authorized_for_doc(current_user, doc_record):
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Access denied: You do not have permission to process this document.",
-        )
+    if current_user is not None:
+        user_roles = [r.name for r in current_user.roles]
+        if "admin" not in user_roles:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Access denied: Only administrators can process enterprise documents.",
+            )
 
     # Immediately transition document to PROCESSING
     doc_record.status = DocumentStatus.PROCESSING
@@ -141,18 +150,24 @@ def get_document(
     "/{document_id}",
     status_code=status.HTTP_204_NO_CONTENT,
     summary="Delete Document",
-    description="Delete a document, its persisted chunks, Qdrant vectors, BM25 index entries, and physical file.",
+    description="Delete a document, its persisted chunks, Qdrant vectors, BM25 index entries, and physical file. Restricted to Admin role.",
 )
 def delete_document(
     document_id: str,
     db: Session = Depends(get_db),
     current_user: Optional[User] = Depends(get_current_user_optional),
 ):
+    if current_user is not None:
+        user_roles = [r.name for r in current_user.roles]
+        if "admin" not in user_roles:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Access denied: Only administrators can delete enterprise documents.",
+            )
+
     document_service.delete_document(
         db=db,
         document_id=document_id,
         user=current_user,
     )
     return None
-
-

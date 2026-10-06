@@ -21,6 +21,7 @@ export const DocumentFilters = ({
   onRefresh,
   onOpenUpload,
   isLoading = false,
+  isAdmin = true,
 }) => {
   const activeCount = [filters.department, filters.status, filters.access_level].filter(Boolean).length;
   const hasActiveFilters = activeCount > 0;
@@ -158,18 +159,20 @@ export const DocumentFilters = ({
           <span>Refresh</span>
         </button>
 
-        <button
-          type="button"
-          className="btn-primary btn-upload-doc"
-          onClick={onOpenUpload}
-          id="btn-open-upload-modal"
-        >
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-            <line x1="12" y1="5" x2="12" y2="19" />
-            <line x1="5" y1="12" x2="19" y2="12" />
-          </svg>
-          <span>Upload Document</span>
-        </button>
+        {isAdmin && (
+          <button
+            type="button"
+            className="btn-primary btn-upload-doc"
+            onClick={onOpenUpload}
+            id="btn-open-upload-modal"
+          >
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+              <line x1="12" y1="5" x2="12" y2="19" />
+              <line x1="5" y1="12" x2="19" y2="12" />
+            </svg>
+            <span>Upload Document</span>
+          </button>
+        )}
       </div>
     </div>
   );

@@ -330,6 +330,7 @@ export const Documents = () => {
         onRefresh={() => loadDocuments(false)}
         onOpenUpload={() => setIsUploadOpen(true)}
         isLoading={isLoading}
+        isAdmin={isAdmin}
       />
 
       {/* Document Table Panel */}
@@ -357,6 +358,7 @@ export const Documents = () => {
             onProcessDocument={handleProcessDocument}
             onDeleteDocument={handleDeleteDocument}
             processingDocIds={processingDocIds}
+            isAdmin={isAdmin}
           />
         </div>
 
@@ -399,12 +401,14 @@ export const Documents = () => {
         </div>
       </div>
 
-      {/* Upload Modal */}
-      <DocumentUploadModal
-        isOpen={isUploadOpen}
-        onClose={() => setIsUploadOpen(false)}
-        onUploadSuccess={handleUploadSuccess}
-      />
+      {/* Upload Modal (Admin only) */}
+      {isAdmin && (
+        <DocumentUploadModal
+          isOpen={isUploadOpen}
+          onClose={() => setIsUploadOpen(false)}
+          onUploadSuccess={handleUploadSuccess}
+        />
+      )}
 
       {/* Document Details & Chunk Inspection Drawer */}
       <DocumentDetailsDrawer
@@ -416,6 +420,7 @@ export const Documents = () => {
           setSelectedDocId(null);
           handleDeleteDocument(doc.id);
         }}
+        isAdmin={isAdmin}
       />
     </div>
   );

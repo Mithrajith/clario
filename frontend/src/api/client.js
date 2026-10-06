@@ -221,6 +221,30 @@ class ApiClient {
     });
   }
 
+  // Hybrid Search Methods
+  async search({
+    query,
+    top_k = 5,
+    filters = null,
+    mode = 'hybrid',
+    enable_rerank = null,
+  }) {
+    if (!query || !query.trim()) throw new Error('Query string cannot be empty');
+
+    const body = {
+      query: query.trim(),
+      top_k,
+      mode,
+    };
+    if (filters) body.filters = filters;
+    if (enable_rerank !== null) body.enable_rerank = enable_rerank;
+
+    return this.request('/api/v1/search', {
+      method: 'POST',
+      body: JSON.stringify(body),
+    });
+  }
+
   // Conversation Management Methods
   async createConversation(title = 'New Conversation') {
     return this.request('/api/v1/conversations', {
@@ -260,6 +284,51 @@ class ApiClient {
     if (!conversationId) throw new Error('Conversation ID is required');
     return this.request(`/api/v1/conversations/${conversationId}`, {
       method: 'DELETE',
+    });
+  }
+
+  // Audit Logs Methods (Admin & Analyst)
+  async getAuditLogs({ skip = 0, limit = 50, action, resource_type, user_id } = {}) {
+    const params = new URLSearchParams();
+    if (skip !== undefined && skip !== null) params.append('skip', String(skip));
+    if (limit !== undefined && limit !== null) params.append('limit', String(limit));
+    if (action) params.append('action', action);
+    if (resource_type) params.append('resource_type', resource_type);
+    if (user_id) params.append('user_id', user_id);
+
+    const queryString = params.toString();
+    const endpoint = `/api/v1/audit-logs${queryString ? `?${queryString}` : ''}`;
+    return this.request(endpoint, {
+      method: 'GET',
+    });
+  }
+
+  // User & Role Management Methods (Admin)
+  async getUsers({ skip = 0, limit = 50, department } = {}) {
+    const params = new URLSearchParams();
+    if (skip !== undefined && skip !== null) params.append('skip', String(skip));
+    if (limit !== undefined && limit !== null) params.append('limit', String(limit));
+    if (department) params.append('department', department);
+
+    const queryString = params.toString();
+    const endpoint = `/api/v1/users${queryString ? `?${queryString}` : ''}`;
+    return this.request(endpoint, {
+      method: 'GET',
+    });
+  }
+
+  async getUser(userId) {
+    if (!userId) throw new Error('User ID is required');
+    return this.request(`/api/v1/users/${userId}`, {
+      method: 'GET',
+    });
+  }
+
+  async updateUser(userId, payload) {
+    if (!userId) throw new Error('User ID is required');
+    return this.request(`/api/v1/users/${userId}`, {
+      method: 'PATCH',
+      body: JSON.stringify(payload),
     });
   }
 }

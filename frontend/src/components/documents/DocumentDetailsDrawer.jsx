@@ -9,6 +9,7 @@ export const DocumentDetailsDrawer = ({
   onClose,
   onProcess,
   onDelete,
+  isAdmin = true,
 }) => {
   const [doc, setDoc] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -182,7 +183,7 @@ export const DocumentDetailsDrawer = ({
                   </div>
                 </div>
 
-                {doc.status === 'UPLOADED' && (
+                {isAdmin && doc.status === 'UPLOADED' && (
                   <button
                     type="button"
                     className="btn-primary btn-process-now"
@@ -302,7 +303,7 @@ export const DocumentDetailsDrawer = ({
 
         {/* Drawer Footer Actions */}
         <div className="drawer-footer">
-          {doc && (
+          {isAdmin && doc && (
             <button
               type="button"
               className="btn-danger-outline"
