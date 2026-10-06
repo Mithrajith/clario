@@ -147,3 +147,4 @@ def update_user(
         logger.warning(f"Failed to record user update audit log: {audit_err}")
 
     return UserRead.model_validate(user)
+

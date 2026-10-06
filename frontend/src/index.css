@@ -3526,3 +3526,356 @@ body {
     width: 220px;
   }
 }
+
+/* ==========================================================================
+   Zero-Trust Security Gateway Loading Screen
+   ========================================================================== */
+
+.gateway-loading-screen {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #060913;
+  background-image: 
+    radial-gradient(circle at 50% 25%, rgba(37, 99, 235, 0.22) 0%, transparent 60%),
+    radial-gradient(circle at 80% 75%, rgba(124, 58, 237, 0.16) 0%, transparent 50%),
+    radial-gradient(circle at 20% 80%, rgba(16, 185, 129, 0.12) 0%, transparent 45%);
+  padding: 1.5rem;
+  overflow: hidden;
+}
+
+.gateway-grid-overlay {
+  position: absolute;
+  inset: 0;
+  background-size: 36px 36px;
+  background-image: 
+    linear-gradient(to right, rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+  mask-image: radial-gradient(ellipse 65% 65% at 50% 50%, #000 30%, transparent 100%);
+  -webkit-mask-image: radial-gradient(ellipse 65% 65% at 50% 50%, #000 30%, transparent 100%);
+  pointer-events: none;
+}
+
+.gateway-loading-card {
+  position: relative;
+  width: 100%;
+  max-width: 490px;
+  background: rgba(13, 19, 33, 0.88);
+  backdrop-filter: blur(28px);
+  -webkit-backdrop-filter: blur(28px);
+  border: 1px solid rgba(59, 130, 246, 0.28);
+  border-radius: 20px;
+  padding: 2.25rem 2rem;
+  box-shadow: 
+    0 20px 50px -10px rgba(0, 0, 0, 0.85),
+    0 0 45px rgba(37, 99, 235, 0.2),
+    inset 0 1px 1px rgba(255, 255, 255, 0.1);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  animation: gateway-card-intro 0.45s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes gateway-card-intro {
+  from {
+    opacity: 0;
+    transform: scale(0.96) translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+/* Radar and Orbital Quantum Animation */
+.gateway-radar-container {
+  position: relative;
+  width: 100px;
+  height: 100px;
+  margin-bottom: 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.gateway-ring {
+  position: absolute;
+  border-radius: 50%;
+  pointer-events: none;
+}
+
+.ring-outer {
+  width: 100px;
+  height: 100px;
+  border: 1.5px dashed rgba(96, 165, 250, 0.35);
+  animation: gateway-spin-cw 12s linear infinite;
+}
+
+.ring-mid {
+  width: 76px;
+  height: 76px;
+  border: 1.5px solid rgba(139, 92, 246, 0.4);
+  border-top-color: transparent;
+  border-bottom-color: transparent;
+  animation: gateway-spin-ccw 7s linear infinite;
+}
+
+.ring-inner {
+  width: 56px;
+  height: 56px;
+  border: 1px dotted rgba(52, 211, 153, 0.5);
+  animation: gateway-spin-cw 5s linear infinite;
+}
+
+.gateway-radar-sweep {
+  position: absolute;
+  width: 90px;
+  height: 90px;
+  border-radius: 50%;
+  background: conic-gradient(from 0deg, rgba(59, 130, 246, 0.35) 0deg, transparent 90deg, transparent 360deg);
+  animation: gateway-radar-sweep 2.4s linear infinite;
+}
+
+.gateway-core-emblem {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.gateway-logo {
+  box-shadow: 0 0 25px rgba(59, 130, 246, 0.65) !important;
+  animation: gateway-core-pulse 2s ease-in-out infinite alternate;
+}
+
+@keyframes gateway-spin-cw {
+  to { transform: rotate(360deg); }
+}
+
+@keyframes gateway-spin-ccw {
+  to { transform: rotate(-360deg); }
+}
+
+@keyframes gateway-radar-sweep {
+  to { transform: rotate(360deg); }
+}
+
+@keyframes gateway-core-pulse {
+  from { transform: scale(0.96); box-shadow: 0 0 16px rgba(59, 130, 246, 0.5); }
+  to { transform: scale(1.04); box-shadow: 0 0 28px rgba(96, 165, 250, 0.85); }
+}
+
+/* Header Text */
+.gateway-header-text {
+  text-align: center;
+  margin-bottom: 1.35rem;
+  width: 100%;
+}
+
+.gateway-live-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.25rem 0.75rem;
+  background: rgba(37, 99, 235, 0.14);
+  border: 1px solid rgba(59, 130, 246, 0.35);
+  border-radius: 9999px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #93c5fd;
+  margin-bottom: 0.75rem;
+}
+
+.gateway-pulse-dot {
+  width: 6px;
+  height: 6px;
+  background-color: #38bdf8;
+  border-radius: 50%;
+  box-shadow: 0 0 8px #38bdf8;
+  animation: gateway-dot-blink 1.4s ease-in-out infinite alternate;
+}
+
+@keyframes gateway-dot-blink {
+  from { opacity: 0.4; transform: scale(0.85); }
+  to { opacity: 1; transform: scale(1.2); }
+}
+
+.gateway-main-title {
+  font-size: 1.18rem;
+  font-weight: 700;
+  color: #ffffff;
+  letter-spacing: -0.015em;
+  margin-bottom: 0.35rem;
+}
+
+.gateway-sub-title {
+  font-size: 0.8rem;
+  color: #94a3b8;
+  line-height: 1.4;
+}
+
+/* Progress Section */
+.gateway-progress-section {
+  width: 100%;
+  margin-bottom: 1.25rem;
+}
+
+.gateway-progress-track {
+  width: 100%;
+  height: 6px;
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 9999px;
+  overflow: hidden;
+  position: relative;
+}
+
+.gateway-progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #2563eb, #38bdf8, #818cf8);
+  border-radius: 9999px;
+  transition: width 0.2s ease;
+  box-shadow: 0 0 10px rgba(56, 189, 248, 0.7);
+}
+
+.gateway-progress-meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 0.4rem;
+  font-size: 0.72rem;
+  font-family: var(--font-mono);
+}
+
+.gateway-meta-left {
+  color: #64748b;
+}
+
+.gateway-meta-pct {
+  color: #38bdf8;
+  font-weight: 700;
+}
+
+/* Steps Checklist */
+.gateway-steps-list {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  margin-bottom: 1.5rem;
+  padding: 0.75rem;
+  background: rgba(15, 23, 42, 0.5);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 12px;
+}
+
+.gateway-step-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.65rem;
+  font-size: 0.78rem;
+  transition: all 0.2s ease;
+}
+
+.gateway-step-item.pending {
+  opacity: 0.35;
+}
+
+.gateway-step-item.active {
+  opacity: 1;
+  color: #ffffff;
+}
+
+.gateway-step-item.done {
+  opacity: 0.85;
+}
+
+.step-indicator-icon {
+  width: 18px;
+  height: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  margin-top: 0.1rem;
+}
+
+.gateway-step-item.done .step-indicator-icon {
+  color: #34d399;
+}
+
+.gateway-step-item.active .step-indicator-icon {
+  color: #38bdf8;
+}
+
+.step-mini-spinner {
+  width: 13px;
+  height: 13px;
+  border: 2px solid rgba(56, 189, 248, 0.25);
+  border-top-color: #38bdf8;
+  border-radius: 50%;
+  animation: gateway-spin-cw 0.7s linear infinite;
+}
+
+.step-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.25);
+}
+
+.step-text-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+}
+
+.step-label {
+  font-weight: 500;
+  color: #e2e8f0;
+}
+
+.gateway-step-item.done .step-label {
+  color: #94a3b8;
+}
+
+.gateway-step-item.active .step-label {
+  color: #ffffff;
+  font-weight: 600;
+}
+
+.step-detail {
+  font-size: 0.68rem;
+  color: #64748b;
+  font-family: var(--font-mono);
+}
+
+/* Gateway Assurance Footer */
+.gateway-card-footer {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  padding-top: 0.75rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.07);
+}
+
+.gateway-compliance-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.68rem;
+  color: #64748b;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  padding: 0.2rem 0.5rem;
+  border-radius: 6px;
+}
+

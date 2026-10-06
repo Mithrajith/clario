@@ -12,6 +12,7 @@ import { Users } from './pages/Users';
 import { Roles } from './pages/Roles';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import { AppLayout } from './components/layout/AppLayout';
+import { SecurityGatewayLoading } from './components/SecurityGatewayLoading';
 
 function AppContent() {
   const { user, isAuthenticated, isLoading } = useAuth();
@@ -82,15 +83,7 @@ function AppContent() {
   };
 
   if (isLoading) {
-    return (
-      <div className="auth-loading-screen">
-        <div className="auth-loading-card">
-          <div className="brand-icon-box large">C</div>
-          <div className="spinner"></div>
-          <p className="loading-text">Connecting to Clario Security Gateway...</p>
-        </div>
-      </div>
-    );
+    return <SecurityGatewayLoading />;
   }
 
   if (isAuthenticated) {

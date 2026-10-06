@@ -31,8 +31,11 @@ export const Documents = () => {
   const pollTimeoutRef = useRef(null);
 
   // Extract user role cleanly
-  const rawRole = user?.roles?.[0];
-  const userRole = (typeof rawRole === 'object' ? rawRole?.name : rawRole) || 'user';
+  const userRoles = user?.roles
+    ? user.roles.map((r) => (typeof r === 'object' ? r.name : r))
+    : ['user'];
+  const userRole = userRoles[0] || 'user';
+  const isAdmin = userRoles.includes('admin');
   const userDept = user?.department || 'Engineering';
 
   const showNotification = (message, type = 'success') => {
