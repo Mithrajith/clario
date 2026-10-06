@@ -4,6 +4,7 @@ import { Login } from './components/Login';
 import { Register } from './components/Register';
 import { Dashboard } from './components/Dashboard';
 import { Documents } from './pages/Documents';
+import { Chat } from './pages/Chat';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import { AppLayout } from './components/layout/AppLayout';
 
@@ -15,10 +16,14 @@ function AppContent() {
     window.location.hash === '#register' ? 'register' : 'login'
   );
 
-  // Authenticated workspace view: 'documents' (default) | 'dashboard'
-  const [workspaceView, setWorkspaceView] = useState(() =>
-    window.location.hash === '#dashboard' ? 'dashboard' : 'documents'
-  );
+  // Authenticated workspace view: 'chat' (default) | 'documents' | 'dashboard'
+  const [workspaceView, setWorkspaceView] = useState(() => {
+    const hash = window.location.hash;
+    if (hash === '#dashboard') return 'dashboard';
+    if (hash === '#documents') return 'documents';
+    if (hash === '#chat') return 'chat';
+    return 'chat';
+  });
 
   // Sync state with URL hash
   useEffect(() => {
@@ -32,6 +37,8 @@ function AppContent() {
         setWorkspaceView('dashboard');
       } else if (hash === '#documents') {
         setWorkspaceView('documents');
+      } else if (hash === '#chat') {
+        setWorkspaceView('chat');
       }
     };
 
@@ -70,7 +77,13 @@ function AppContent() {
     return (
       <ProtectedRoute>
         <AppLayout currentView={workspaceView} onViewChange={handleWorkspaceViewChange}>
-          {workspaceView === 'dashboard' ? <Dashboard /> : <Documents />}
+          {workspaceView === 'dashboard' ? (
+            <Dashboard />
+          ) : workspaceView === 'documents' ? (
+            <Documents />
+          ) : (
+            <Chat />
+          )}
         </AppLayout>
       </ProtectedRoute>
     );

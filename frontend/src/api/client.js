@@ -192,6 +192,76 @@ class ApiClient {
       method: 'DELETE',
     });
   }
+
+  // Knowledge Intelligence & RAG Query Methods
+  async query({
+    query,
+    top_k = 5,
+    filters = null,
+    mode = 'hybrid',
+    enable_rerank = null,
+    max_output_tokens = 1024,
+    verify = true,
+  }) {
+    if (!query || !query.trim()) throw new Error('Query string cannot be empty');
+
+    const body = {
+      query: query.trim(),
+      top_k,
+      mode,
+      max_output_tokens,
+      verify,
+    };
+    if (filters) body.filters = filters;
+    if (enable_rerank !== null) body.enable_rerank = enable_rerank;
+
+    return this.request('/api/v1/query', {
+      method: 'POST',
+      body: JSON.stringify(body),
+    });
+  }
+
+  // Conversation Management Methods
+  async createConversation(title = 'New Conversation') {
+    return this.request('/api/v1/conversations', {
+      method: 'POST',
+      body: JSON.stringify({ title: title || 'New Conversation' }),
+    });
+  }
+
+  async listConversations() {
+    return this.request('/api/v1/conversations', {
+      method: 'GET',
+    });
+  }
+
+  async getConversation(conversationId) {
+    if (!conversationId) throw new Error('Conversation ID is required');
+    return this.request(`/api/v1/conversations/${conversationId}`, {
+      method: 'GET',
+    });
+  }
+
+  async postMessage(conversationId, { content, top_k = 5, verify = true }) {
+    if (!conversationId) throw new Error('Conversation ID is required');
+    if (!content || !content.trim()) throw new Error('Message content cannot be empty');
+
+    return this.request(`/api/v1/conversations/${conversationId}/messages`, {
+      method: 'POST',
+      body: JSON.stringify({
+        content: content.trim(),
+        top_k,
+        verify,
+      }),
+    });
+  }
+
+  async deleteConversation(conversationId) {
+    if (!conversationId) throw new Error('Conversation ID is required');
+    return this.request(`/api/v1/conversations/${conversationId}`, {
+      method: 'DELETE',
+    });
+  }
 }
 
 export const apiClient = new ApiClient();

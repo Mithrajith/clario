@@ -73,6 +73,16 @@ export const AppLayout = ({ currentView = 'documents', onViewChange, children })
             <div className="sidebar-group-title">Knowledge Base</div>
             <ul className="sidebar-menu">
               <li
+                className={`sidebar-item ${currentView === 'chat' ? 'active' : ''}`}
+                onClick={() => navigateTo('chat')}
+                id="nav-chat"
+              >
+                <svg className="sidebar-item-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+                </svg>
+                <span>Knowledge Chat</span>
+              </li>
+              <li
                 className={`sidebar-item ${currentView === 'documents' ? 'active' : ''}`}
                 onClick={() => navigateTo('documents')}
                 id="nav-documents"
@@ -109,12 +119,6 @@ export const AppLayout = ({ currentView = 'documents', onViewChange, children })
           <div>
             <div className="sidebar-group-title">Future Capabilities</div>
             <ul className="sidebar-menu">
-              <li className="sidebar-item disabled" title="Chat interface scheduled for future phase">
-                <svg className="sidebar-item-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
-                </svg>
-                <span>Knowledge Chat (Next)</span>
-              </li>
               <li className="sidebar-item disabled" title="Search interface scheduled for future phase">
                 <svg className="sidebar-item-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                   <circle cx="11" cy="11" r="8" />
