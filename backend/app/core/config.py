@@ -21,6 +21,16 @@ class Settings(BaseSettings):
         "http://localhost:3000",
     ]
 
+    @field_validator("DEBUG", mode="before")
+    @classmethod
+    def assemble_debug(cls, v: Any) -> bool:
+        if isinstance(v, str):
+            if v.strip().lower() in ("true", "1", "yes", "debug", "dev", "development"):
+                return True
+            if v.strip().lower() in ("false", "0", "no", "release", "prod", "production"):
+                return False
+        return bool(v)
+
     @field_validator("CORS_ORIGINS", mode="before")
     @classmethod
     def assemble_cors_origins(cls, v: Any) -> List[str]:
