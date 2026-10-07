@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { AuthProvider, useAuth } from './context/AuthContext';
+import { PipelineProvider } from './context/PipelineContext';
 import { Login } from './components/Login';
 import { Register } from './components/Register';
 import { Dashboard } from './components/Dashboard';
@@ -126,41 +127,43 @@ function AppContent() {
 
     return (
       <ProtectedRoute>
-        <AppLayout currentView={workspaceView} onViewChange={handleWorkspaceViewChange}>
-          {workspaceView === 'dashboard' ? (
-            isAdminOrAnalyst ? (
-              <Dashboard />
+        <PipelineProvider>
+          <AppLayout currentView={workspaceView} onViewChange={handleWorkspaceViewChange}>
+            {workspaceView === 'dashboard' ? (
+              isAdminOrAnalyst ? (
+                <Dashboard />
+              ) : (
+                renderForbidden(`Your account role (${userRoles[0]?.toUpperCase() || 'USER'}) is not authorized to access infrastructure diagnostics.`)
+              )
+            ) : workspaceView === 'audit-logs' ? (
+              isAdminOrAnalyst ? (
+                <AuditLogs />
+              ) : (
+                renderForbidden(`Your account role (${userRoles[0]?.toUpperCase() || 'USER'}) is not authorized to view enterprise audit logs.`)
+              )
+            ) : workspaceView === 'users' ? (
+              isAdmin ? (
+                <Users />
+              ) : (
+                renderForbidden(`Your account role (${userRoles[0]?.toUpperCase() || 'USER'}) is not authorized to manage user accounts.`)
+              )
+            ) : workspaceView === 'roles' ? (
+              isAdmin ? (
+                <Roles />
+              ) : (
+                renderForbidden(`Your account role (${userRoles[0]?.toUpperCase() || 'USER'}) is not authorized to access role configurations.`)
+              )
+            ) : workspaceView === 'documents' ? (
+              <Documents />
+            ) : workspaceView === 'search' ? (
+              <Search />
+            ) : workspaceView === 'profile' ? (
+              <Profile />
             ) : (
-              renderForbidden(`Your account role (${userRoles[0]?.toUpperCase() || 'USER'}) is not authorized to access infrastructure diagnostics.`)
-            )
-          ) : workspaceView === 'audit-logs' ? (
-            isAdminOrAnalyst ? (
-              <AuditLogs />
-            ) : (
-              renderForbidden(`Your account role (${userRoles[0]?.toUpperCase() || 'USER'}) is not authorized to view enterprise audit logs.`)
-            )
-          ) : workspaceView === 'users' ? (
-            isAdmin ? (
-              <Users />
-            ) : (
-              renderForbidden(`Your account role (${userRoles[0]?.toUpperCase() || 'USER'}) is not authorized to manage user accounts.`)
-            )
-          ) : workspaceView === 'roles' ? (
-            isAdmin ? (
-              <Roles />
-            ) : (
-              renderForbidden(`Your account role (${userRoles[0]?.toUpperCase() || 'USER'}) is not authorized to access role configurations.`)
-            )
-          ) : workspaceView === 'documents' ? (
-            <Documents />
-          ) : workspaceView === 'search' ? (
-            <Search />
-          ) : workspaceView === 'profile' ? (
-            <Profile />
-          ) : (
-            <Chat />
-          )}
-        </AppLayout>
+              <Chat />
+            )}
+          </AppLayout>
+        </PipelineProvider>
       </ProtectedRoute>
     );
   }

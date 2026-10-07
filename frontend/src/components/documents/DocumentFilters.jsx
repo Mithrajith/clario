@@ -20,6 +20,9 @@ export const DocumentFilters = ({
   onResetFilters,
   onRefresh,
   onOpenUpload,
+  onProcessAll,
+  pendingCount = 0,
+  isProcessingAll = false,
   isLoading = false,
   isAdmin = true,
 }) => {
@@ -158,6 +161,32 @@ export const DocumentFilters = ({
           </svg>
           <span>Refresh</span>
         </button>
+
+        {isAdmin && onProcessAll && (
+          <button
+            type="button"
+            className="btn-secondary btn-process-all"
+            onClick={onProcessAll}
+            disabled={isLoading || isProcessingAll}
+            id="btn-process-all-docs"
+            title="Trigger parsing and vector indexing for all pending documents"
+            style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', border: '1px solid rgba(245, 158, 11, 0.4)', color: '#fbbf24' }}
+          >
+            {isProcessingAll ? (
+              <>
+                <span className="btn-spinner"></span>
+                <span>Processing...</span>
+              </>
+            ) : (
+              <>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
+                </svg>
+                <span>Process All Documents {pendingCount > 0 ? `(${pendingCount})` : ''}</span>
+              </>
+            )}
+          </button>
+        )}
 
         {isAdmin && (
           <button

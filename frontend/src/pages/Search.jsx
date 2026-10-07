@@ -198,7 +198,7 @@ export const Search = () => {
         </div>
       </div>
 
-      {/* Quick Suggestions (When no results yet) */}
+      {/* Search Guidance (When no results yet) */}
       {!results && !isLoading && !error && (
         <div className="search-suggestions-card">
           <h3 className="suggestions-title">
@@ -207,38 +207,11 @@ export const Search = () => {
               <line x1="12" y1="16" x2="12" y2="12" />
               <line x1="12" y1="8" x2="12.01" y2="8" />
             </svg>
-            <span>Suggested Knowledge Queries</span>
+            <span>Search Guidance</span>
           </h3>
-          <div className="suggestions-pills">
-            <button
-              type="button"
-              className="suggestion-pill"
-              onClick={() => handleSuggestionClick('What is the annual leave allowance for Clario employees?')}
-            >
-              Annual leave policy & employee benefits
-            </button>
-            <button
-              type="button"
-              className="suggestion-pill"
-              onClick={() => handleSuggestionClick('Cloud architecture and database infrastructure')}
-            >
-              Cloud architecture & database specs
-            </button>
-            <button
-              type="button"
-              className="suggestion-pill"
-              onClick={() => handleSuggestionClick('Travel expense reimbursement policy')}
-            >
-              Travel expense reimbursement guidelines
-            </button>
-            <button
-              type="button"
-              className="suggestion-pill"
-              onClick={() => handleSuggestionClick('Security compliance and data access control')}
-            >
-              Security compliance & RBAC policy
-            </button>
-          </div>
+          <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', margin: '0.5rem 0 0', lineHeight: 1.5 }}>
+            Type any keywords or natural language query into the search bar above. Retrieval is executed in realtime against Qdrant Cloud vector embeddings and BM25 full-text indices partitioned by your department ({userDept}).
+          </p>
         </div>
       )}
 

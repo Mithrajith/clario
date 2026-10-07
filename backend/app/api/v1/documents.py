@@ -97,6 +97,43 @@ def process_document(
     return doc_record
 
 
+@router.post(
+    "/process-all",
+    response_model=List[DocumentRead],
+    status_code=status.HTTP_200_OK,
+    summary="Process All Pending Documents",
+    description="Trigger asynchronous parsing, chunking, embedding generation, and vector indexing for all pending or failed documents. Restricted to Admin role.",
+)
+def process_all_documents(
+    background_tasks: BackgroundTasks,
+    db: Session = Depends(get_db),
+    current_user: Optional[User] = Depends(get_current_user_optional),
+):
+    if current_user is not None:
+        user_roles = [r.name for r in current_user.roles]
+        if "admin" not in user_roles:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Access denied: Only administrators can process enterprise documents.",
+            )
+
+    pending_docs = (
+        db.query(Document)
+        .filter(Document.status.in_([DocumentStatus.UPLOADED, DocumentStatus.FAILED]))
+        .all()
+    )
+
+    for doc in pending_docs:
+        doc.status = DocumentStatus.PROCESSING
+        background_tasks.add_task(document_service.process_document_background, str(doc.id))
+
+    db.commit()
+    for doc in pending_docs:
+        db.refresh(doc)
+
+    return pending_docs
+
+
 @router.get(
     "",
     response_model=List[DocumentRead],

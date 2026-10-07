@@ -1,6 +1,7 @@
 import React from 'react';
 import { CitationCard } from './CitationCard';
 import { VerificationBadge } from './VerificationBadge';
+import { MarkdownRenderer } from '../common/MarkdownRenderer';
 
 export const MessageBubble = ({ message }) => {
   if (!message) return null;
@@ -60,14 +61,9 @@ export const MessageBubble = ({ message }) => {
           </div>
         )}
 
-        {/* Answer Content */}
+        {/* Formatted Markdown Answer Content */}
         <div className="message-content assistant-content">
-          {content.split('\n').map((line, idx) => (
-            <React.Fragment key={idx}>
-              {line}
-              {idx < content.split('\n').length - 1 && <br />}
-            </React.Fragment>
-          ))}
+          <MarkdownRenderer content={content} />
         </div>
 
         {/* Citations */}

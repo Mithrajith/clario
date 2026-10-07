@@ -3879,3 +3879,164 @@ body {
   border-radius: 6px;
 }
 
+/* ==========================================================================
+   Markdown Renderer & LLM Output Formatting
+   ========================================================================== */
+
+.markdown-body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  color: var(--text-primary);
+  line-height: 1.6;
+}
+
+.markdown-h1 {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #f8fafc;
+  margin-top: 0.75rem;
+  margin-bottom: 0.25rem;
+  border-bottom: 1px solid var(--border-subtle);
+  padding-bottom: 0.3rem;
+}
+
+.markdown-h2 {
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: #f1f5f9;
+  margin-top: 0.65rem;
+  margin-bottom: 0.2rem;
+}
+
+.markdown-h3 {
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: #e2e8f0;
+  margin-top: 0.5rem;
+  margin-bottom: 0.15rem;
+}
+
+.markdown-h4 {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #93c5fd;
+  margin-top: 0.45rem;
+  margin-bottom: 0.1rem;
+}
+
+.markdown-h5 {
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: #cbd5e1;
+  margin-top: 0.35rem;
+}
+
+.markdown-bold {
+  font-weight: 700;
+  color: #f8fafc;
+}
+
+.markdown-p {
+  margin: 0;
+  line-height: 1.6;
+}
+
+.markdown-ul,
+.markdown-ol {
+  margin: 0.25rem 0 0.5rem 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.markdown-ul li {
+  list-style-type: disc;
+  line-height: 1.5;
+}
+
+.markdown-ol li {
+  list-style-type: decimal;
+  line-height: 1.5;
+}
+
+.markdown-quote {
+  border-left: 3px solid var(--brand-primary);
+  padding: 0.35rem 0.75rem;
+  margin: 0.4rem 0;
+  background: rgba(59, 130, 246, 0.08);
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+  color: var(--text-secondary);
+  font-style: italic;
+}
+
+.inline-code {
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: #93c5fd;
+  font-family: var(--font-mono);
+  font-size: 0.85em;
+  padding: 0.15em 0.4em;
+  border-radius: 4px;
+}
+
+.code-block-wrapper {
+  margin: 0.6rem 0;
+  background: #080c14;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.code-block-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.4rem 0.75rem;
+  background: rgba(255, 255, 255, 0.03);
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.code-lang-tag {
+  font-size: 0.72rem;
+  font-family: var(--font-mono);
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.btn-copy-code {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: var(--text-secondary);
+  font-size: 0.72rem;
+  padding: 0.2rem 0.5rem;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-copy-code:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--text-primary);
+}
+
+.code-block-content {
+  padding: 0.85rem 1rem;
+  margin: 0;
+  overflow-x: auto;
+  font-family: var(--font-mono);
+  font-size: 0.82rem;
+  line-height: 1.5;
+  color: #e2e8f0;
+}
+
+.markdown-hr {
+  border: none;
+  border-top: 1px solid var(--border-subtle);
+  margin: 0.75rem 0;
+}
+

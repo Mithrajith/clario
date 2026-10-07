@@ -134,8 +134,9 @@ class ApiClient {
     });
   }
 
-  async checkHealth() {
-    return this.request('/health', {
+  async checkHealth(verbose = true) {
+    const endpoint = verbose ? '/health?verbose=true' : '/health';
+    return this.request(endpoint, {
       method: 'GET',
     });
   }
@@ -182,6 +183,12 @@ class ApiClient {
   async processDocument(documentId) {
     if (!documentId) throw new Error('Document ID is required');
     return this.request(`/api/v1/documents/${documentId}/process`, {
+      method: 'POST',
+    });
+  }
+
+  async processAllDocuments() {
+    return this.request('/api/v1/documents/process-all', {
       method: 'POST',
     });
   }

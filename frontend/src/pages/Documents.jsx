@@ -1,34 +1,35 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import apiClient from '../api/client';
 import { useAuth } from '../context/AuthContext';
+import { usePipeline } from '../context/PipelineContext';
 import { DocumentFilters } from '../components/documents/DocumentFilters';
 import { DocumentTable } from '../components/documents/DocumentTable';
 import { DocumentUploadModal } from '../components/documents/DocumentUploadModal';
 import { DocumentDetailsDrawer } from '../components/documents/DocumentDetailsDrawer';
 
-const PAGE_SIZE = 10;
-const MAX_POLL_CYCLES = 25; // Stop polling after ~75 seconds
-
 export const Documents = () => {
   const { user } = useAuth();
-  const [documents, setDocuments] = useState([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const {
+    documents,
+    isDocsLoading: isLoading,
+    docsPage: page,
+    setDocsPage: setPage,
+    docsHasMore: hasMore,
+    docsFilters: filters,
+    setDocsFilters: setFilters,
+    loadDocuments,
+    processDocument,
+    processAllDocuments,
+    tasks,
+  } = usePipeline();
+
   const [error, setError] = useState('');
   const [notification, setNotification] = useState(null);
-
-  // Filters & Pagination
-  const [filters, setFilters] = useState({});
-  const [page, setPage] = useState(1);
-  const [hasMore, setHasMore] = useState(false);
+  const [isProcessingAll, setIsProcessingAll] = useState(false);
 
   // Modals & Drawers
   const [isUploadOpen, setIsUploadOpen] = useState(false);
   const [selectedDocId, setSelectedDocId] = useState(null);
-
-  // Set of doc IDs currently undergoing background processing
-  const [processingDocIds, setProcessingDocIds] = useState(new Set());
-  const pollCountRef = useRef(0);
-  const pollTimeoutRef = useRef(null);
 
   // Extract user role cleanly
   const userRoles = user?.roles
@@ -45,97 +46,36 @@ export const Documents = () => {
     }, 4500);
   };
 
-  const loadDocuments = useCallback(
-    async (isBackground = false) => {
-      if (!isBackground) {
-        setIsLoading(true);
-        setError('');
-      }
-
-      try {
-        const skip = (page - 1) * PAGE_SIZE;
-        const data = await apiClient.getDocuments({
-          skip,
-          limit: PAGE_SIZE,
-          department: filters.department,
-          status: filters.status,
-          access_level: filters.access_level,
-        });
-
-        const list = Array.isArray(data) ? data : [];
-        setDocuments(list);
-        setHasMore(list.length === PAGE_SIZE);
-
-        // Update processingDocIds tracking based on retrieved documents
-        setProcessingDocIds((prev) => {
-          const updated = new Set(prev);
-          list.forEach((doc) => {
-            if (doc.status === 'PROCESSING') {
-              updated.add(doc.id);
-            } else if (doc.status === 'READY' || doc.status === 'FAILED') {
-              updated.delete(doc.id);
-            }
-          });
-          return updated;
-        });
-      } catch (err) {
-        if (!isBackground) {
-          setError(err.message || 'Failed to load documents from backend.');
-        }
-      } finally {
-        if (!isBackground) {
-          setIsLoading(false);
-        }
-      }
-    },
-    [page, filters]
-  );
-
   // Initial and reactive load on page/filter change
   useEffect(() => {
     loadDocuments(false);
   }, [loadDocuments]);
 
-  // Lightweight polling for asynchronous processing
-  useEffect(() => {
-    const hasActiveProcessing =
-      documents.some((d) => d.status === 'PROCESSING') || processingDocIds.size > 0;
-
-    if (!hasActiveProcessing) {
-      pollCountRef.current = 0;
-      clearTimeout(pollTimeoutRef.current);
-      return;
-    }
-
-    if (pollCountRef.current >= MAX_POLL_CYCLES) {
-      console.warn('Max polling cycles reached for background document processing.');
-      return;
-    }
-
-    pollTimeoutRef.current = setTimeout(() => {
-      pollCountRef.current += 1;
-      loadDocuments(true);
-    }, 3000);
-
-    return () => {
-      clearTimeout(pollTimeoutRef.current);
-    };
-  }, [documents, processingDocIds, loadDocuments]);
-
   // Action: Trigger document processing
-  const handleProcessDocument = async (documentId) => {
+  const handleProcessDocument = async (documentId, documentTitle) => {
     try {
-      setDocuments((prev) =>
-        prev.map((d) => (d.id === documentId ? { ...d, status: 'PROCESSING' } : d))
-      );
-      setProcessingDocIds((prev) => new Set(prev).add(documentId));
-
-      await apiClient.processDocument(documentId);
-      showNotification('Document ingestion dispatched: extracting text, chunking & vectorizing.', 'info');
-      pollCountRef.current = 0;
+      const pid = await processDocument(documentId, documentTitle);
+      showNotification(`Document ingestion queued (Process: ${pid}). Text extraction & vector indexing in progress.`, 'info');
     } catch (err) {
       showNotification(`Failed to process document: ${err.message}`, 'error');
-      loadDocuments(true);
+    }
+  };
+
+  // Action: Trigger process all pending documents
+  const handleProcessAll = async () => {
+    setIsProcessingAll(true);
+    try {
+      const pids = await processAllDocuments();
+      showNotification(
+        pids.length > 0
+          ? `Dispatched ${pids.length} background ingestion tasks to Qdrant Cloud pipeline.`
+          : 'Dispatched background ingestion tasks for all pending documents.',
+        'info'
+      );
+    } catch (err) {
+      showNotification(`Batch ingestion failed: ${err.message}`, 'error');
+    } finally {
+      setIsProcessingAll(false);
     }
   };
 
@@ -149,7 +89,7 @@ export const Documents = () => {
     }
 
     if (documents.length === 1 && page > 1) {
-      setPage((p) => p - 1);
+      setPage(page - 1);
     } else {
       loadDocuments(false);
     }
@@ -175,8 +115,12 @@ export const Documents = () => {
 
   // Summary Metrics Calculation
   const readyCount = documents.filter((d) => d.status === 'READY').length;
-  const processingCount = documents.filter((d) => d.status === 'PROCESSING' || processingDocIds.has(d.id)).length;
+  const pendingCount = documents.filter((d) => d.status === 'UPLOADED' || d.status === 'FAILED').length;
+  const processingCount = documents.filter((d) => d.status === 'PROCESSING').length;
   const totalChunks = documents.reduce((sum, d) => sum + (d.chunk_count || 0), 0);
+  const activeProcessingDocIds = new Set(
+    tasks.filter((t) => t.status === 'PROCESSING' && t.targetId).map((t) => t.targetId)
+  );
 
   return (
     <div className="documents-page-container">
@@ -332,6 +276,9 @@ export const Documents = () => {
         onResetFilters={handleResetFilters}
         onRefresh={() => loadDocuments(false)}
         onOpenUpload={() => setIsUploadOpen(true)}
+        onProcessAll={handleProcessAll}
+        pendingCount={pendingCount}
+        isProcessingAll={isProcessingAll}
         isLoading={isLoading}
         isAdmin={isAdmin}
       />
@@ -358,9 +305,12 @@ export const Documents = () => {
             documents={documents}
             isLoading={isLoading}
             onSelectDocument={(doc) => setSelectedDocId(doc.id)}
-            onProcessDocument={handleProcessDocument}
+            onProcessDocument={(docId) => {
+              const targetDoc = documents.find((d) => d.id === docId);
+              handleProcessDocument(docId, targetDoc?.title || targetDoc?.filename);
+            }}
             onDeleteDocument={handleDeleteDocument}
-            processingDocIds={processingDocIds}
+            processingDocIds={activeProcessingDocIds}
             isAdmin={isAdmin}
           />
         </div>

@@ -55,7 +55,7 @@ export const Dashboard = () => {
 
   const roleDetails = {
     admin: {
-      name: 'Administrator (IT)',
+      name: 'Administrator',
       badgeClass: 'admin',
       capabilities: [
         'Full document ingestion & processing across all departments',
@@ -65,7 +65,7 @@ export const Dashboard = () => {
       ],
     },
     analyst: {
-      name: 'Analyst (Operations)',
+      name: 'Analyst',
       badgeClass: 'analyst',
       capabilities: [
         'Query operational and cross-departmental knowledge bases',
@@ -75,10 +75,10 @@ export const Dashboard = () => {
       ],
     },
     user: {
-      name: 'Standard User (Engineering)',
+      name: 'Standard User',
       badgeClass: 'user',
       capabilities: [
-        'Query Engineering and public enterprise knowledge bases',
+        'Query authorized enterprise knowledge bases',
         'Interactive multi-turn conversation with contextual follow-ups',
         'Inspect grounded source citations and page references',
         'Strict department security isolation enforced',
@@ -94,7 +94,7 @@ export const Dashboard = () => {
         <div>
           <h1 className="page-title">Identity, RBAC & Infrastructure</h1>
           <p className="page-description">
-            Active JWT-authenticated session for <strong>{user?.email}</strong> &bull; Department: <strong>{user?.department || 'General'}</strong>
+            Active session for <strong>{user?.email || 'Authenticated User'}</strong> &bull; Department: <strong>{user?.department || 'Unassigned'}</strong>
           </p>
         </div>
         <div style={{ display: 'flex', gap: '0.75rem' }}>
@@ -117,14 +117,15 @@ export const Dashboard = () => {
               <line x1="6" y1="6" x2="6.01" y2="6" />
               <line x1="6" y1="18" x2="6.01" y2="18" />
             </svg>
-            <span>Active Cloud Infrastructure & AI Pipeline</span>
+            <span>Realtime Cloud Infrastructure & AI Pipeline</span>
           </div>
           <button
             className="btn-action"
             onClick={checkHealth}
             id="btn-recheck-health"
+            disabled={healthStatus.loading}
           >
-            Refresh Diagnostics
+            {healthStatus.loading ? 'Checking...' : 'Refresh Diagnostics'}
           </button>
         </div>
 
@@ -133,14 +134,14 @@ export const Dashboard = () => {
             <thead>
               <tr>
                 <th>Component</th>
-                <th>Provider & Target</th>
-                <th>Status</th>
+                <th>Target / Endpoint</th>
+                <th>Realtime Status</th>
               </tr>
             </thead>
             <tbody>
               <tr>
-                <td><strong>Clario FastAPI Backend</strong></td>
-                <td><span className="code-badge">/api/v1/health</span></td>
+                <td><strong>FastAPI Backend Service</strong></td>
+                <td><span className="code-badge">{healthStatus.data?.service || '/health'}</span></td>
                 <td>
                   {healthStatus.loading ? (
                     <span className="status-pill neutral">Checking...</span>
@@ -153,23 +154,33 @@ export const Dashboard = () => {
               </tr>
               <tr>
                 <td><strong>Relational Database</strong></td>
-                <td><span className="code-badge">Neon Serverless PostgreSQL (PostgreSQL 18.6)</span></td>
-                <td><span className="status-pill success">● Connected & Synced</span></td>
+                <td><span className="code-badge">PostgreSQL Database</span></td>
+                <td>
+                  {healthStatus.loading ? (
+                    <span className="status-pill neutral">Checking...</span>
+                  ) : healthStatus.data?.database === 'connected' ? (
+                    <span className="status-pill success">● Connected</span>
+                  ) : healthStatus.data?.database ? (
+                    <span className="status-pill error">● Error ({healthStatus.data.database})</span>
+                  ) : (
+                    <span className="status-pill neutral">Pending check</span>
+                  )}
+                </td>
               </tr>
               <tr>
-                <td><strong>Vector Database Cluster</strong></td>
-                <td><span className="code-badge">Qdrant Cloud (384-dim BAAI/bge-small-en-v1.5)</span></td>
-                <td><span className="status-pill success">● Cluster Green</span></td>
-              </tr>
-              <tr>
-                <td><strong>LLM Inference Engine</strong></td>
-                <td><span className="code-badge">Groq Cloud (qwen/qwen3.8-27b)</span></td>
-                <td><span className="status-pill success">● Operational (Sub-500ms)</span></td>
-              </tr>
-              <tr>
-                <td><strong>Grounding Verification Engine</strong></td>
-                <td><span className="code-badge">DeBERTa-v3 NLI Cross-Encoder</span></td>
-                <td><span className="status-pill success">● Loaded & Calibrated</span></td>
+                <td><strong>Vector Database</strong></td>
+                <td><span className="code-badge">Qdrant Vector Store</span></td>
+                <td>
+                  {healthStatus.loading ? (
+                    <span className="status-pill neutral">Checking...</span>
+                  ) : healthStatus.data?.qdrant === 'connected' ? (
+                    <span className="status-pill success">● Connected</span>
+                  ) : healthStatus.data?.qdrant ? (
+                    <span className="status-pill error">● {healthStatus.data.qdrant}</span>
+                  ) : (
+                    <span className="status-pill neutral">Pending check</span>
+                  )}
+                </td>
               </tr>
             </tbody>
           </table>

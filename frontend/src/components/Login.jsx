@@ -33,24 +33,6 @@ export const Login = ({ onSwitchToRegister }) => {
     }
   };
 
-  const handleDemoFill = async (demoEmail, demoPassword, autoSubmit = false) => {
-    setEmail(demoEmail);
-    setPassword(demoPassword);
-    setValidationError('');
-    clearError();
-
-    if (autoSubmit) {
-      setIsSubmitting(true);
-      try {
-        await login(demoEmail, demoPassword);
-      } catch {
-        // Handled by AuthContext
-      } finally {
-        setIsSubmitting(false);
-      }
-    }
-  };
-
   const displayError = validationError || authError;
 
   return (
@@ -182,50 +164,6 @@ export const Login = ({ onSwitchToRegister }) => {
               Register here
             </button>
           </p>
-
-          <div className="quick-access-box">
-            <span className="quick-access-title">Quick Demo Logins</span>
-            <div className="demo-role-grid">
-              <button
-                type="button"
-                className="demo-role-card admin"
-                onClick={() => handleDemoFill('admin@clario.local', 'ClarioAdmin2026!')}
-                title="Click to fill Admin (IT) credentials"
-              >
-                <div className="demo-role-card-header">
-                  <span className="demo-card-icon">🛡️</span>
-                  <span className="demo-role-title">Admin</span>
-                </div>
-                <span className="demo-role-dept">IT Department</span>
-              </button>
-
-              <button
-                type="button"
-                className="demo-role-card analyst"
-                onClick={() => handleDemoFill('analyst@clario.local', 'ClarioAnalyst2026!')}
-                title="Click to fill Analyst (Operations) credentials"
-              >
-                <div className="demo-role-card-header">
-                  <span className="demo-card-icon">📊</span>
-                  <span className="demo-role-title">Analyst</span>
-                </div>
-                <span className="demo-role-dept">Operations</span>
-              </button>
-
-              <button
-                type="button"
-                className="demo-role-card user"
-                onClick={() => handleDemoFill('user@clario.local', 'ClarioUser2026!')}
-                title="Click to fill User (Engineering) credentials"
-              >
-                <div className="demo-role-card-header">
-                  <span className="demo-card-icon">⚡</span>
-                  <span className="demo-role-title">User</span>
-                </div>
-                <span className="demo-role-dept">Engineering</span>
-              </button>
-            </div>
-          </div>
         </div>
       </div>
     </div>

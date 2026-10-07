@@ -1,18 +1,26 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
-import apiClient from '../api/client';
+import React, { useEffect, useRef } from 'react';
 import { useAuth } from '../context/AuthContext';
+import { usePipeline } from '../context/PipelineContext';
 import { ConversationSidebar } from '../components/chat/ConversationSidebar';
 import { MessageBubble } from '../components/chat/MessageBubble';
 
 export const Chat = () => {
   const { user } = useAuth();
-  const [conversations, setConversations] = useState([]);
-  const [activeConversationId, setActiveConversationId] = useState(null);
-  const [messages, setMessages] = useState([]);
-  const [inputQuery, setInputQuery] = useState('');
-  const [isLoadingHistory, setIsLoadingHistory] = useState(false);
-  const [isGenerating, setIsGenerating] = useState(false);
-  const [error, setError] = useState('');
+  const {
+    conversations,
+    activeConversationId,
+    messages,
+    inputQuery,
+    setInputQuery,
+    isLoadingHistory,
+    isGenerating,
+    chatError,
+    loadConversations,
+    selectConversation,
+    newChat,
+    deleteConversation,
+    sendMessage,
+  } = usePipeline();
 
   const messagesEndRef = useRef(null);
   const inputRef = useRef(null);
@@ -25,169 +33,24 @@ export const Chat = () => {
     scrollToBottom();
   }, [messages, isGenerating]);
 
-  // Load conversation list on mount
-  const loadConversations = useCallback(async () => {
-    setIsLoadingHistory(true);
-    try {
-      const list = await apiClient.listConversations();
-      setConversations(Array.isArray(list) ? list : []);
-    } catch (err) {
-      console.warn('Failed to load conversation history:', err);
-    } finally {
-      setIsLoadingHistory(false);
-    }
-  }, []);
-
   useEffect(() => {
     loadConversations();
   }, [loadConversations]);
 
-  // Load specific conversation messages
-  const handleSelectConversation = async (conversationId) => {
-    if (conversationId === activeConversationId) return;
-
-    setError('');
-    setActiveConversationId(conversationId);
-    setIsLoadingHistory(true);
-
-    try {
-      const conv = await apiClient.getConversation(conversationId);
-      const rawMessages = Array.isArray(conv.messages) ? conv.messages : [];
-      setMessages(rawMessages);
-    } catch (err) {
-      setError(err.message || 'Failed to load conversation messages.');
-      setMessages([]);
-    } finally {
-      setIsLoadingHistory(false);
-    }
-  };
-
-  // Start a new chat session
-  const handleNewChat = () => {
-    setActiveConversationId(null);
-    setMessages([]);
-    setError('');
-    if (inputRef.current) {
-      inputRef.current.focus();
-    }
-  };
-
-  // Delete conversation
-  const handleDeleteConversation = async (conversationId) => {
-    try {
-      await apiClient.deleteConversation(conversationId);
-      if (activeConversationId === conversationId) {
-        handleNewChat();
-      }
-      await loadConversations();
-    } catch (err) {
-      setError(`Failed to delete conversation: ${err.message}`);
-    }
-  };
-
-  // Submit question / message
-  const handleSendMessage = async (e, forcedQuery = null) => {
+  const handleSubmit = (e, forcedQuery = null) => {
     if (e) e.preventDefault();
-
-    const query = (forcedQuery || inputQuery).trim();
-    if (!query || isGenerating) return;
-
-    setInputQuery('');
-    setError('');
-
-    const optimisticUserMsg = {
-      id: `temp-${Date.now()}`,
-      role: 'user',
-      content: query,
-      created_at: new Date().toISOString(),
-    };
-
-    setMessages((prev) => [...prev, optimisticUserMsg]);
-    setIsGenerating(true);
-
-    try {
-      let targetConvId = activeConversationId;
-
-      // If no active conversation, create one first
-      if (!targetConvId) {
-        const titleWords = query.split(/\s+/).slice(0, 6).join(' ');
-        const initialTitle = titleWords.length > 50 ? `${titleWords.slice(0, 47)}...` : titleWords;
-        const newConv = await apiClient.createConversation(initialTitle || 'New Conversation');
-        targetConvId = newConv.id;
-        setActiveConversationId(targetConvId);
-      }
-
-      // Post message to the conversation endpoint (executes RAG + Grounding Verification)
-      const res = await apiClient.postMessage(targetConvId, {
-        content: query,
-        top_k: 5,
-        verify: true,
-      });
-
-      const assistantMsg = {
-        ...res.assistant_message,
-        generation: res.generation || {},
-        citations: res.generation?.citations || [],
-        verification: res.generation?.verification || null,
-        has_sufficient_context: res.generation?.has_sufficient_context !== false,
-        latency_ms: res.generation?.latency_ms,
-        model_name: res.generation?.model_name,
-        retrieval_mode: res.generation?.retrieval_mode,
-      };
-
-      setMessages((prev) => {
-        const updated = prev.filter((m) => m.id !== optimisticUserMsg.id);
-        return [
-          ...updated,
-          res.user_message || optimisticUserMsg,
-          assistantMsg,
-        ];
-      });
-
-      // Refresh conversations list to update title and updated_at order
-      await loadConversations();
-    } catch (err) {
-      setError(err.message || 'Failed to generate answer from knowledge base.');
-    } finally {
-      setIsGenerating(false);
-    }
+    sendMessage(forcedQuery || inputQuery);
   };
 
   const handleKeyDown = (e) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
-      handleSendMessage();
+      handleSubmit();
     }
   };
 
   const activeConv = conversations.find((c) => c.id === activeConversationId);
-  const rawRole = user?.roles?.[0];
-  const roleName = typeof rawRole === 'object' ? rawRole?.name : rawRole;
-  const userRole = (typeof roleName === 'string' ? roleName : 'user').toLowerCase();
-  const roleDepartment = user?.department || 'General';
-
-  // Role-adaptive starter prompts
-  const getPromptSuggestions = () => {
-    if (userRole === 'admin') {
-      return [
-        'What is the annual leave allowance for Clario employees and interns?',
-        'Summarize the corporate information security and VPN access policies.',
-        'What are the compliance and document access classification standards?',
-      ];
-    }
-    if (userRole === 'analyst') {
-      return [
-        'What are the standard operational expense and travel reimbursement procedures?',
-        'Summarize employee benefits, sick days, and vacation policies.',
-        'What are the document retention and compliance guidelines?',
-      ];
-    }
-    return [
-      'What is the annual leave allowance for Clario employees?',
-      'What are the requirements for corporate VPN and credentials?',
-      'How does sick leave policy apply to doctor visits?',
-    ];
-  };
+  const roleDepartment = user?.department || 'Enterprise';
 
   return (
     <div className="chat-page-container">
@@ -195,9 +58,9 @@ export const Chat = () => {
       <ConversationSidebar
         conversations={conversations}
         activeConversationId={activeConversationId}
-        onSelectConversation={handleSelectConversation}
-        onNewChat={handleNewChat}
-        onDeleteConversation={handleDeleteConversation}
+        onSelectConversation={selectConversation}
+        onNewChat={newChat}
+        onDeleteConversation={deleteConversation}
         isLoading={isLoadingHistory && conversations.length === 0}
       />
 
@@ -221,14 +84,14 @@ export const Chat = () => {
         </header>
 
         {/* Global Error Banner */}
-        {error && (
+        {chatError && (
           <div className="auth-alert error chat-error-banner" role="alert">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <circle cx="12" cy="12" r="10" />
               <line x1="12" y1="8" x2="12" y2="12" />
               <line x1="12" y1="16" x2="12.01" y2="16" />
             </svg>
-            <span>{error}</span>
+            <span>{chatError}</span>
           </div>
         )}
 
@@ -239,25 +102,9 @@ export const Chat = () => {
               <div className="brand-icon-box large">C</div>
               <h2>Ask Clario Knowledge Base</h2>
               <p>
-                Ask natural language questions against authorized enterprise documentation.
-                Responses are synthesized from retrieved passages and verified for factual grounding.
+                Ask questions against uploaded enterprise documentation and authorized knowledge bases.
+                Responses are synthesized from retrieved passages in Qdrant & PostgreSQL and verified for factual grounding.
               </p>
-              <div className="prompt-suggestions">
-                <span className="suggestions-title">Recommended for {roleDepartment} ({userRole.toUpperCase()}):</span>
-                {getPromptSuggestions().map((prompt, idx) => (
-                  <button
-                    key={idx}
-                    type="button"
-                    className="suggestion-pill"
-                    onClick={() => {
-                      setInputQuery(prompt);
-                      handleSendMessage(null, prompt);
-                    }}
-                  >
-                    "{prompt}"
-                  </button>
-                ))}
-              </div>
             </div>
           ) : (
             <div className="messages-list">
@@ -287,7 +134,7 @@ export const Chat = () => {
 
         {/* Query Input Box */}
         <div className="chat-input-container">
-          <form onSubmit={handleSendMessage} className="chat-input-form">
+          <form onSubmit={handleSubmit} className="chat-input-form">
             <textarea
               ref={inputRef}
               className="chat-textarea"

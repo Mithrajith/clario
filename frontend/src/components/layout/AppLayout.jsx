@@ -1,8 +1,11 @@
 import React from 'react';
 import { useAuth } from '../../context/AuthContext';
+import { usePipeline } from '../../context/PipelineContext';
+import { ProcessingPipeline } from '../common/ProcessingPipeline';
 
 export const AppLayout = ({ currentView = 'chat', onViewChange, children }) => {
   const { user, logout } = useAuth();
+  const { activeTasksCount, setIsPipelineDrawerOpen } = usePipeline();
 
   const userInitials = user?.name
     ? user.name
@@ -37,6 +40,9 @@ export const AppLayout = ({ currentView = 'chat', onViewChange, children }) => {
 
   return (
     <div className="app-container">
+      {/* Realtime Processing Pipeline Drawer */}
+      <ProcessingPipeline />
+
       {/* Enterprise Top Navigation Bar */}
       <header className="app-header">
         <div className="header-left">
@@ -55,10 +61,39 @@ export const AppLayout = ({ currentView = 'chat', onViewChange, children }) => {
         </div>
 
         <div className="header-right">
-          <div className="system-status-indicator" title="Connected to Enterprise Knowledge Cloud">
-            <span className="pulse-dot"></span>
-            <span>Cloud Connected</span>
-          </div>
+          {/* Active Parallel Tasks / Pipeline Indicator */}
+          <button
+            type="button"
+            className={`btn-pipeline-indicator ${activeTasksCount > 0 ? 'active' : 'idle'}`}
+            onClick={() => setIsPipelineDrawerOpen(true)}
+            id="btn-open-pipeline-drawer"
+            title="View background processing pipeline tasks"
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.45rem',
+              padding: '0.35rem 0.75rem',
+              borderRadius: '20px',
+              border: activeTasksCount > 0 ? '1px solid rgba(245, 158, 11, 0.5)' : '1px solid rgba(255, 255, 255, 0.1)',
+              background: activeTasksCount > 0 ? 'rgba(245, 158, 11, 0.15)' : 'rgba(255, 255, 255, 0.04)',
+              color: activeTasksCount > 0 ? '#fbbf24' : 'var(--text-secondary)',
+              cursor: 'pointer',
+              fontSize: '0.78rem',
+              fontWeight: 600,
+            }}
+          >
+            {activeTasksCount > 0 ? (
+              <>
+                <span className="pulse-dot warning"></span>
+                <span>{activeTasksCount} Pipeline Task{activeTasksCount === 1 ? '' : 's'} Active</span>
+              </>
+            ) : (
+              <>
+                <span className="pulse-dot"></span>
+                <span>Pipeline Synced</span>
+              </>
+            )}
+          </button>
 
           <div
             className="user-profile-badge"
