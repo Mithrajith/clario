@@ -978,6 +978,43 @@ body {
   border: 1px solid var(--border-color);
 }
 
+.chat-mode-selector-container {
+  display: inline-flex;
+  align-items: center;
+}
+
+.chat-retrieval-mode-select {
+  background: rgba(15, 23, 42, 0.9);
+  color: #60a5fa;
+  border: 1px solid rgba(59, 130, 246, 0.35);
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 0.25rem 0.6rem;
+  border-radius: var(--radius-sm);
+  outline: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+}
+
+.chat-retrieval-mode-select:hover {
+  background: rgba(30, 41, 59, 0.95);
+  border-color: #60a5fa;
+  color: #93c5fd;
+}
+
+.chat-retrieval-mode-select:focus {
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.25);
+}
+
+.chat-retrieval-mode-select option {
+  background-color: #0f172a;
+  color: #f8fafc;
+  padding: 0.4rem;
+}
+
+
 /* Chat Messages Scroll Container */
 .chat-messages-scroll {
   flex: 1;
@@ -3559,25 +3596,73 @@ body {
   pointer-events: none;
 }
 
-.gateway-loading-card {
+.gateway-loading-card,
+.gateway-minimal-card {
   position: relative;
-  width: 100%;
-  max-width: 490px;
-  background: rgba(13, 19, 33, 0.88);
+  background: rgba(13, 19, 33, 0.85);
   backdrop-filter: blur(28px);
   -webkit-backdrop-filter: blur(28px);
   border: 1px solid rgba(59, 130, 246, 0.28);
-  border-radius: 20px;
-  padding: 2.25rem 2rem;
+  border-radius: 24px;
+  padding: 2.5rem;
   box-shadow: 
     0 20px 50px -10px rgba(0, 0, 0, 0.85),
-    0 0 45px rgba(37, 99, 235, 0.2),
+    0 0 45px rgba(37, 99, 235, 0.25),
     inset 0 1px 1px rgba(255, 255, 255, 0.1);
   display: flex;
   flex-direction: column;
   align-items: center;
+  justify-content: center;
   animation: gateway-card-intro 0.45s cubic-bezier(0.16, 1, 0.3, 1);
 }
+
+.gateway-loading-card {
+  width: 100%;
+  max-width: 490px;
+}
+
+.gateway-minimal-card {
+  width: auto;
+  min-width: 180px;
+  min-height: 180px;
+}
+
+.minimal-spinner-dots {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  margin-top: 0.5rem;
+}
+
+.minimal-spinner-dots .dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background-color: #60a5fa;
+  animation: dot-pulse 1.4s ease-in-out infinite both;
+}
+
+.minimal-spinner-dots .dot-1 {
+  animation-delay: -0.32s;
+}
+
+.minimal-spinner-dots .dot-2 {
+  animation-delay: -0.16s;
+}
+
+@keyframes dot-pulse {
+  0%, 80%, 100% {
+    transform: scale(0.6);
+    opacity: 0.3;
+  }
+  40% {
+    transform: scale(1.2);
+    opacity: 1;
+    background-color: #93c5fd;
+  }
+}
+
 
 @keyframes gateway-card-intro {
   from {

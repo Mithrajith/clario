@@ -3,11 +3,21 @@
  * Configured with VITE_API_URL and automatic JWT authorization injection.
  */
 
-const BASE_URL = (
-  (typeof import.meta !== 'undefined' && import.meta.env?.VITE_API_URL) ||
-  (typeof process !== 'undefined' && process.env?.VITE_API_URL) ||
-  'http://localhost:8000'
-).replace(/\/+$/, '');
+const getBaseUrl = () => {
+  if (typeof import.meta !== 'undefined' && import.meta.env?.VITE_API_URL) {
+    return import.meta.env.VITE_API_URL.replace(/\/+$/, '');
+  }
+  if (typeof process !== 'undefined' && process.env?.VITE_API_URL) {
+    return process.env.VITE_API_URL.replace(/\/+$/, '');
+  }
+  if (typeof window !== 'undefined' && window.location.port !== '5173' && window.location.port !== '3000') {
+    return '';
+  }
+  return 'http://localhost:8000';
+};
+
+const BASE_URL = getBaseUrl();
+
 
 class ApiClient {
   constructor() {
@@ -273,7 +283,7 @@ class ApiClient {
     });
   }
 
-  async postMessage(conversationId, { content, top_k = 5, verify = true }) {
+  async postMessage(conversationId, { content, top_k = 5, mode = 'hybrid', verify = true }) {
     if (!conversationId) throw new Error('Conversation ID is required');
     if (!content || !content.trim()) throw new Error('Message content cannot be empty');
 
@@ -282,10 +292,12 @@ class ApiClient {
       body: JSON.stringify({
         content: content.trim(),
         top_k,
+        mode,
         verify,
       }),
     });
   }
+
 
   async deleteConversation(conversationId) {
     if (!conversationId) throw new Error('Conversation ID is required');

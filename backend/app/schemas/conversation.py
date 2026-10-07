@@ -14,7 +14,9 @@ class MessageBase(BaseModel):
 class MessageCreate(BaseModel):
     content: str = Field(..., min_length=1, description="User follow-up question / message")
     top_k: Optional[int] = Field(5, ge=1, le=20, description="Max candidate chunks for RAG retrieval")
+    mode: Optional[str] = Field("hybrid", description="Retrieval mode: 'hybrid', 'semantic'/'vector', 'bm25'")
     verify: Optional[bool] = Field(None, description="Explicitly enable/disable grounding verification")
+
 
 
 class MessageRead(MessageBase):

@@ -1,3 +1,4 @@
+import os
 import logging
 from typing import List, Optional
 import numpy as np
@@ -9,10 +10,8 @@ logger = logging.getLogger(__name__)
 
 
 class SentenceTransformerEmbeddingService(BaseEmbeddingService):
-    """Embedding service utilizing SentenceTransformers models.
-    
-    Defaults to BAAI/bge-small-en-v1.5 producing 384-dimensional normalized vectors.
-    Loads model once and reuses it for CPU or GPU execution.
+    """High-throughput embedding service utilizing SentenceTransformers models with GPU/CUDA acceleration,
+    PyTorch multi-core CPU threading, and optimized FP16 inference.
     """
 
     def __init__(
@@ -28,6 +27,7 @@ class SentenceTransformerEmbeddingService(BaseEmbeddingService):
         self.device_setting = device or settings.EMBEDDING_DEVICE
         
         self._model = None
+        self._is_cuda = False
 
     def _resolve_device(self) -> str:
         """Resolve 'auto' device setting to 'cuda' if GPU available, otherwise 'cpu'."""
@@ -42,15 +42,43 @@ class SentenceTransformerEmbeddingService(BaseEmbeddingService):
         return self.device_setting
 
     def _get_model(self):
-        """Lazy load and reuse the SentenceTransformer model instance."""
+        """Lazy load, configure GPU/CPU optimizations, and reuse the SentenceTransformer model instance."""
         if self._model is None:
             resolved_device = self._resolve_device()
             logger.info(
-                f"Loading embedding model '{self.model_name}' on device '{resolved_device}'..."
+                f"Loading high-performance embedding model '{self.model_name}' on device '{resolved_device}'..."
             )
             try:
+                import torch
+                # Optimize CPU threading if running on CPU or multi-core
+                cpu_threads = min(12, os.cpu_count() or 4)
+                try:
+                    torch.set_num_threads(cpu_threads)
+                    torch.set_num_interop_threads(cpu_threads)
+                except Exception:
+                    pass
+
+                if resolved_device == "cuda" and torch.cuda.is_available():
+                    self._is_cuda = True
+                    torch.backends.cudnn.benchmark = True
+                    # Increase batch size automatically for GPU
+                    if self.batch_size < 128:
+                        self.batch_size = 128
+
                 from sentence_transformers import SentenceTransformer
                 self._model = SentenceTransformer(self.model_name, device=resolved_device)
+
+                # Use FP16 on CUDA for 3-5x faster inference and 50% less VRAM
+                if self._is_cuda and hasattr(self._model, "half"):
+                    try:
+                        self._model = self._model.half()
+                        logger.info("Enabled FP16 half-precision on CUDA for maximum embedding throughput.")
+                    except Exception as fp_err:
+                        logger.warning(f"Could not convert embedding model to FP16: {fp_err}")
+
+                logger.info(
+                    f"Embedding model loaded successfully on {resolved_device} (batch_size={self.batch_size}, threads={cpu_threads})."
+                )
             except Exception as err:
                 logger.error(f"Failed to load embedding model '{self.model_name}': {err}")
                 raise RuntimeError(f"Embedding model loading failed for {self.model_name}: {err}") from err
@@ -72,10 +100,7 @@ class SentenceTransformerEmbeddingService(BaseEmbeddingService):
         return embeddings
 
     def embed_documents(self, texts: List[str]) -> List[List[float]]:
-        """Generate 384-dimensional normalized embeddings for a list of document chunk texts.
-        
-        Uses explicit batching and cosine normalization. Preserves deterministic order.
-        """
+        """Generate 384-dimensional normalized embeddings for document chunk texts using GPU acceleration."""
         if not texts:
             return []
 
@@ -97,21 +122,17 @@ class SentenceTransformerEmbeddingService(BaseEmbeddingService):
             raise RuntimeError(f"Document embedding generation failed: {err}") from err
 
         if isinstance(raw_embeddings, np.ndarray):
-            embeddings_list = raw_embeddings.tolist()
+            embeddings_list = raw_embeddings.astype(float).tolist()
         else:
-            embeddings_list = [list(vec) for vec in raw_embeddings]
+            embeddings_list = [list(map(float, vec)) for vec in raw_embeddings]
 
         return self._validate_embeddings(embeddings_list)
 
     def embed_query(self, query: str) -> List[float]:
-        """Generate a 384-dimensional normalized embedding for a search query.
-        
-        BGE v1.5 recommendation: Document chunks are encoded as-is, while search queries
-        can optionally include instruction prefixes if required by specific downstream models.
-        For BAAI/bge-small-en-v1.5, default query encoding uses direct input or standard prefix.
-        """
+        """Generate a 384-dimensional normalized embedding for a search query."""
         if not query or not query.strip():
             query = " "
 
         embeddings = self.embed_documents([query])
         return embeddings[0]
+

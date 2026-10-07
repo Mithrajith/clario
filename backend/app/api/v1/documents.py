@@ -123,15 +123,19 @@ def process_all_documents(
         .all()
     )
 
+    doc_ids = [str(doc.id) for doc in pending_docs]
     for doc in pending_docs:
         doc.status = DocumentStatus.PROCESSING
-        background_tasks.add_task(document_service.process_document_background, str(doc.id))
 
     db.commit()
     for doc in pending_docs:
         db.refresh(doc)
 
+    # Dispatch to multi-threaded CPU/GPU worker pool
+    document_service.process_multiple_documents_parallel(doc_ids)
+
     return pending_docs
+
 
 
 @router.get(

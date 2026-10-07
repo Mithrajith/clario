@@ -1,6 +1,8 @@
+import os
 import uuid
 import logging
 from typing import Optional, List, Tuple, Any
+from concurrent.futures import ThreadPoolExecutor
 from fastapi import UploadFile, HTTPException, status
 from sqlalchemy.orm import Session
 
@@ -11,6 +13,11 @@ from app.services.parsers.factory import ParserFactory
 from app.schemas.parser import ParsedDocument
 
 logger = logging.getLogger(__name__)
+
+# Dedicated parallel worker pool for concurrent document parsing and vector indexing
+_MAX_WORKERS = min(8, max(2, (os.cpu_count() or 4)))
+_document_executor = ThreadPoolExecutor(max_workers=_MAX_WORKERS, thread_name_prefix="doc_worker")
+logger.info(f"Initialized Document Processing ThreadPool with {_MAX_WORKERS} parallel CPU/GPU workers.")
 
 # Known MIME types mapping
 MIME_MAPPINGS = {
@@ -30,6 +37,8 @@ class DocumentService:
 
     def __init__(self, storage=None):
         self.storage = storage or file_storage_service
+        self.executor = _document_executor
+
 
     def validate_file_type_and_extension(self, filename: str) -> str:
         """Extract and validate extension against supported types (pdf, docx, txt)."""
@@ -297,6 +306,15 @@ class DocumentService:
                 except Exception as db_err:
                     logger.error(f"Failed to update document status to FAILED in background task: {db_err}")
 
+    def process_multiple_documents_parallel(self, document_ids: List[str]) -> None:
+        """Submit multiple documents to the parallel worker pool for simultaneous GPU/CPU parsing & vector indexing."""
+        if not document_ids:
+            return
+        logger.info(f"Dispatching {len(document_ids)} documents to parallel execution pool ({_MAX_WORKERS} workers)...")
+        for doc_id in document_ids:
+            self.executor.submit(self.process_document_background, str(doc_id))
+
+
     def process_document(self, db: Session, document_id: str) -> Document:
         """Process document end-to-end: UPLOADED -> PROCESSING -> Parse -> Chunk -> Index -> READY / FAILED."""
         from app.services.chunking.service import chunking_service
@@ -507,12 +525,28 @@ class DocumentService:
         if access_level:
             query = query.filter(Document.access_level == access_level.lower())
 
-        return (
+        docs = (
             query.order_by(Document.created_at.desc())
             .offset(skip)
             .limit(limit)
             .all()
         )
+
+        if docs:
+            from app.models.document_chunk import DocumentChunk
+            from sqlalchemy import func
+            doc_ids = [d.id for d in docs]
+            chunk_counts = dict(
+                db.query(DocumentChunk.document_id, func.count(DocumentChunk.id))
+                .filter(DocumentChunk.document_id.in_(doc_ids))
+                .group_by(DocumentChunk.document_id)
+                .all()
+            )
+            for d in docs:
+                setattr(d, "chunk_count", chunk_counts.get(d.id, 0))
+
+        return docs
+
 
     def get_document(
         self,

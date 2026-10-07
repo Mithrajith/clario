@@ -27,11 +27,11 @@ load_dotenv(env_path, override=True)
 from sqlalchemy import text
 from qdrant_client.http import models as qmodels
 
-from app.core.config import settings
-from app.core.database import engine, Base, SessionLocal
-from app.services.vector_service import vector_service
-from app.models.role import Role, ROLE_USER, ROLE_ADMIN, ROLE_ANALYST, SYSTEM_ROLES
-from app.models.user import User
+from backend.app.core.config import settings
+from backend.app.core.database import engine, Base, SessionLocal
+from backend.app.services.vector_service import vector_service
+from backend.app.models.role import Role, ROLE_USER, ROLE_ADMIN, ROLE_ANALYST, SYSTEM_ROLES
+from backend.app.models.user import User
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
 logger = logging.getLogger("cloud_verifier")

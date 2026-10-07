@@ -17,6 +17,8 @@ export const PipelineProvider = ({ children }) => {
   const [isLoadingHistory, setIsLoadingHistory] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
   const [chatError, setChatError] = useState('');
+  const [chatRetrievalMode, setChatRetrievalMode] = useState('hybrid');
+
 
   // 3. Document Repository Global State & Sync
   const [documents, setDocuments] = useState([]);
@@ -275,6 +277,7 @@ export const PipelineProvider = ({ children }) => {
         const res = await apiClient.postMessage(targetConvId, {
           content: query,
           top_k: 5,
+          mode: chatRetrievalMode,
           verify: true,
         });
 
@@ -286,7 +289,7 @@ export const PipelineProvider = ({ children }) => {
           has_sufficient_context: res.generation?.has_sufficient_context !== false,
           latency_ms: res.generation?.latency_ms,
           model_name: res.generation?.model_name,
-          retrieval_mode: res.generation?.retrieval_mode,
+          retrieval_mode: res.generation?.retrieval_mode || chatRetrievalMode,
         };
 
         setMessages((prev) => {
@@ -303,7 +306,7 @@ export const PipelineProvider = ({ children }) => {
         setIsGenerating(false);
       }
     },
-    [inputQuery, isGenerating, activeConversationId, addTask, updateTask, loadConversations]
+    [inputQuery, isGenerating, activeConversationId, chatRetrievalMode, addTask, updateTask, loadConversations]
   );
 
   const activeTasksCount = tasks.filter((t) => t.status === 'PROCESSING' || t.status === 'QUEUED').length;
@@ -341,12 +344,15 @@ export const PipelineProvider = ({ children }) => {
     isGenerating,
     chatError,
     setChatError,
+    chatRetrievalMode,
+    setChatRetrievalMode,
     loadConversations,
     selectConversation,
     newChat,
     deleteConversation,
     sendMessage,
   };
+
 
   return <PipelineContext.Provider value={value}>{children}</PipelineContext.Provider>;
 };

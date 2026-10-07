@@ -229,12 +229,11 @@ export const Search = () => {
 
       {/* Loading State */}
       {isLoading && (
-        <div className="search-loading-state">
-          <div className="spinner"></div>
-          <p className="loading-text">Searching authorized enterprise knowledge...</p>
-          <span className="loading-subtext">Querying Qdrant Cloud vectors & BM25 indices</span>
+        <div className="search-loading-state" style={{ padding: '3rem 0', display: 'flex', justifyContent: 'center' }}>
+          <div className="spinner" style={{ width: '36px', height: '36px', borderWidth: '3px' }}></div>
         </div>
       )}
+
 
       {/* Results List */}
       {results && !isLoading && (

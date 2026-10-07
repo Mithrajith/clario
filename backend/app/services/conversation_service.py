@@ -111,14 +111,28 @@ class ConversationService:
         ]
 
         # 2. Execute RAG question answering pipeline enforcing user authorization and conversation history
+        from app.services.retrieval.models import RetrievalMode
+
+        resolved_mode = None
+        if req.mode:
+            mode_lower = req.mode.lower().strip()
+            if mode_lower in ("vector", "semantic", "dense"):
+                resolved_mode = RetrievalMode.SEMANTIC
+            elif mode_lower in ("bm25", "keyword", "sparse"):
+                resolved_mode = RetrievalMode.BM25
+            else:
+                resolved_mode = RetrievalMode.HYBRID
+
         gen_resp = generation_service.answer_query(
             db=db,
             query=req.content.strip(),
             top_k=req.top_k,
+            mode=resolved_mode,
             verify=req.verify,
             user=user,
             history=history,
         )
+
 
 
         verification_status_str = None

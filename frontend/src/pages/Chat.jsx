@@ -15,12 +15,15 @@ export const Chat = () => {
     isLoadingHistory,
     isGenerating,
     chatError,
+    chatRetrievalMode,
+    setChatRetrievalMode,
     loadConversations,
     selectConversation,
     newChat,
     deleteConversation,
     sendMessage,
   } = usePipeline();
+
 
   const messagesEndRef = useRef(null);
   const inputRef = useRef(null);
@@ -77,11 +80,26 @@ export const Chat = () => {
             </span>
           </div>
 
-          <div className="chat-header-badges">
+          <div className="chat-header-badges" style={{ display: 'flex', alignItems: 'center', gap: '0.625rem', flexWrap: 'wrap' }}>
+            <div className="chat-mode-selector-container">
+              <select
+                id="chat-retrieval-mode-select"
+                className="chat-retrieval-mode-select"
+                value={chatRetrievalMode}
+                onChange={(e) => setChatRetrievalMode(e.target.value)}
+                title="Select RAG Retrieval Engine"
+                aria-label="RAG Retrieval Strategy"
+              >
+                <option value="hybrid">⚡ Hybrid (Vector + BM25)</option>
+                <option value="vector">🎯 Vector (Semantic Search)</option>
+                <option value="bm25">📄 BM25 (Keyword Search)</option>
+              </select>
+            </div>
             <span className="code-badge">{roleDepartment} Scope</span>
-            <span className="status-pill success">● RAG Pipeline Online</span>
+            <span className="status-pill success">● Online</span>
           </div>
         </header>
+
 
         {/* Global Error Banner */}
         {chatError && (
@@ -121,11 +139,11 @@ export const Chat = () => {
                       <div className="dot"></div>
                       <div className="dot"></div>
                       <div className="dot"></div>
-                      <span>Synthesizing answer & verifying sources...</span>
                     </div>
                   </div>
                 </div>
               )}
+
 
               <div ref={messagesEndRef} />
             </div>

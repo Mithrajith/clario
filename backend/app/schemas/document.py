@@ -27,11 +27,13 @@ class DocumentRead(BaseModel):
     file_path: str
     file_size: int
     status: DocumentStatus
+    chunk_count: int = 0
     uploaded_by: Optional[uuid.UUID] = None
     created_at: datetime
     updated_at: datetime
 
     model_config = ConfigDict(from_attributes=True)
+
 
 
 class DocumentDetailRead(DocumentRead):

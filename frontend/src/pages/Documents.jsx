@@ -113,14 +113,16 @@ export const Documents = () => {
     setPage(1);
   };
 
-  // Summary Metrics Calculation
-  const readyCount = documents.filter((d) => d.status === 'READY').length;
-  const pendingCount = documents.filter((d) => d.status === 'UPLOADED' || d.status === 'FAILED').length;
-  const processingCount = documents.filter((d) => d.status === 'PROCESSING').length;
-  const totalChunks = documents.reduce((sum, d) => sum + (d.chunk_count || 0), 0);
+  // Summary Metrics Calculation (Case-insensitive matching & dynamic chunk aggregation)
+  const isStatus = (doc, target) => String(doc?.status || '').toUpperCase() === target.toUpperCase();
+  const readyCount = documents.filter((d) => isStatus(d, 'READY')).length;
+  const pendingCount = documents.filter((d) => isStatus(d, 'UPLOADED') || isStatus(d, 'FAILED')).length;
+  const processingCount = documents.filter((d) => isStatus(d, 'PROCESSING')).length || tasks.filter((t) => t.status === 'PROCESSING').length;
+  const totalChunks = documents.reduce((sum, d) => sum + (Number(d.chunk_count) || 0), 0);
   const activeProcessingDocIds = new Set(
     tasks.filter((t) => t.status === 'PROCESSING' && t.targetId).map((t) => t.targetId)
   );
+
 
   return (
     <div className="documents-page-container">

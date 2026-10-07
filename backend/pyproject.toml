@@ -23,6 +23,7 @@ dependencies = [
     "sentence-transformers>=2.5.0,<4.0.0",
     "rank-bm25>=0.2.2,<1.0.0",
     "tiktoken>=0.6.0,<1.0.0",
+    "torch>=2.14.1",
 ]
 
 [project.optional-dependencies]
@@ -33,3 +34,9 @@ dev = [
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+
+[dependency-groups]
+dev = [
+    "pytest>=8.4.2",
+    "pytest-asyncio>=1.4.0",
+]
