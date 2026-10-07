@@ -55,9 +55,31 @@ clario/
 └── .env.example                 # Environment template
 ```
 
+## One-Command Management (`clario.sh`)
+
+You can manage the entire application using the included [`clario.sh`](file:///home/zypher/Downloads/clario/clario.sh) script:
+
+```bash
+# Setup: Install all backend (uv) and frontend (npm) dependencies
+./clario.sh setup
+
+# Start: Launch FastAPI (uv uvicorn) and Vite frontend in background
+./clario.sh start
+
+# Status: Check running service PIDs and API health
+./clario.sh status
+
+# Stop: Gracefully terminate all running backend and frontend processes
+./clario.sh stop
+
+# Restart: Stop and start both services
+./clario.sh restart
+```
+
 ---
 
-## Quick Start (Docker Compose — Recommended)
+## Quick Start (Docker Compose)
+
 
 Deploy the entire production stack (Frontend, Backend, PostgreSQL, and Qdrant) with a single command:
 

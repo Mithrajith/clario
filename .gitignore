@@ -63,3 +63,5 @@ qdrant_data/
 *.swo
 .DS_Store
 Thumbs.db
+*.log
+.run/
