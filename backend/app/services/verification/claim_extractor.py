@@ -77,16 +77,23 @@ class ClaimExtractor:
             clean_text = self.MALFORMED_TAG_REGEX.sub("", clean_text)
             clean_text = re.sub(r"\s+", " ", clean_text).strip()
 
-            # Ignore conversational greetings, questions, or trivial phrases
-            lower_clean = clean_text.lower().strip(" .!?,;:")
+            # Ignore conversational greetings, questions, preamble, or trivial phrases
+            lower_clean = clean_text.lower().strip(" .!?,;:*#")
             conversational_phrases = {
                 "hello", "hi", "hey", "thank you", "thanks", "you're welcome", 
                 "how can i help you today", "how can i help you", "good morning", "good afternoon",
-                "let me know if you need anything else", "hope this helps"
+                "let me know if you need anything else", "hope this helps",
+                "based on the provided documentation", "based on the documentation",
+                "according to the provided documents", "according to the documentation",
+                "here is the summary", "here are the key details",
             }
             if (
                 len(clean_text) < 15
                 or lower_clean in conversational_phrases
+                or lower_clean.startswith("based on the provided")
+                or lower_clean.startswith("according to the")
+                or lower_clean.startswith("here is what the")
+                or lower_clean.startswith("here are the rules")
                 or clean_text.endswith("?")
                 or not re.search(r"[a-zA-Z0-9]", clean_text)
             ):
@@ -97,7 +104,8 @@ class ClaimExtractor:
 
             for sub_clause in sub_clauses:
                 sub_clean = sub_clause.strip()
-                if len(sub_clean) < 10:
+                sub_lower = sub_clean.lower().strip(" .!?,;:*#")
+                if len(sub_clean) < 12 or sub_lower in conversational_phrases or sub_lower.startswith("based on the"):
                     continue
 
                 claims.append(
@@ -111,6 +119,7 @@ class ClaimExtractor:
                     )
                 )
                 claim_counter += 1
+
 
         return claims
 

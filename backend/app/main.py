@@ -1,9 +1,14 @@
 import logging
+import warnings
 from contextlib import asynccontextmanager
 from fastapi import FastAPI, Request, status
 from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from starlette.middleware.base import BaseHTTPMiddleware
+
+# Suppress internal PyTorch JIT deprecation FutureWarning from third-party transformers
+warnings.filterwarnings("ignore", category=FutureWarning, module="torch.jit")
+warnings.filterwarnings("ignore", message=".*torch.jit.script.*")
 
 from app.core.config import settings
 from app.core.database import Base, engine
@@ -26,9 +31,8 @@ async def lifespan(app: FastAPI):
 
     # Initialize Qdrant collection if available
     try:
-        from app.services.vector_store import VectorStoreService
-        vs = VectorStoreService()
-        vs.ensure_collection()
+        from app.services.vector_service import vector_service
+        vector_service.ensure_collection_exists()
         logger.info("Vector store collection verified.")
     except Exception as vs_err:
         logger.warning(f"Vector store collection verification deferred: {vs_err}")
@@ -43,6 +47,7 @@ async def lifespan(app: FastAPI):
         logger.warning(f"Embedding model pre-warming note: {warm_err}")
 
     yield
+
 
 
     logger.info(f"Shutting down {settings.PROJECT_NAME}...")

@@ -83,7 +83,11 @@ export const PipelineProvider = ({ children }) => {
           access_level: docsFilters.access_level,
         });
 
-        const list = Array.isArray(data) ? data : [];
+        const list = (Array.isArray(data) ? data : []).map((doc) => ({
+          ...doc,
+          status: String(doc.status || '').toUpperCase(),
+          chunk_count: Number(doc.chunk_count) || 0,
+        }));
         setDocuments(list);
         setDocsHasMore(list.length === 10);
 
@@ -100,6 +104,7 @@ export const PipelineProvider = ({ children }) => {
       } finally {
         if (!isBackground) setIsDocsLoading(false);
       }
+
     },
     [docsPage, docsFilters, updateTask]
   );

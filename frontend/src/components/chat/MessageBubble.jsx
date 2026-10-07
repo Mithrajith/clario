@@ -69,8 +69,6 @@ export const MessageBubble = ({ message }) => {
         {/* Citations */}
         {citations && citations.length > 0 && <CitationCard citations={citations} />}
 
-        {/* Grounding Verification */}
-        {verification && <VerificationBadge verification={verification} />}
 
         {/* Generation Metadata Footer */}
         {(modelName || retrievalMode || latencyMs) && (
